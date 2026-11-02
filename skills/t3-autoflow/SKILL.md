@@ -17,8 +17,9 @@ Use [validation](references/validation.md) for handoff and check helpers.
 - Preserve the user's requested scope. Record whether they authorized local work,
   PR publication, and merge. Invoking this skill alone does not authorize all three.
   Settle missing scope during planning, before autonomous execution.
-- One flow and one code writer per checkout. Use shared-checkout delegates; never
-  create worktrees. An existing T3-managed checkout is the working repository.
+- One flow and one code writer per checkout. Delegates may share the flow checkout
+  or use T3-managed worktree isolation. T3 owns worktree creation and lifecycle;
+  follow the isolation and integration rules in the runtime contract.
 - Discover available providers and models through T3 and select them by role.
   Honor prompt overrides; record the choices. No silent substitution or CLI relay.
 - Delegate planning, coding, review, and arbitration using the role briefs in the
@@ -41,7 +42,8 @@ Use [validation](references/validation.md) for handoff and check helpers.
 
 Store artifacts outside the checkout, for example under
 `~/.local/state/t3-autoflow/<flow-id>/`. Only the parent writes these artifacts.
-Persist the checkout path, parent thread ID/link, branch/base, authorized actions,
+Persist the flow checkout path, each delegate's isolation and returned checkout/branch,
+integration revisions, parent thread ID/link, branch/base, authorized actions,
 selected models, discovered checks and their sources, accepted plan, current phase/task, child task IDs and thread
 links, last verified revision, PR URL, and whether merge was attempted. Append
 significant events and evidence paths to `ledger.jsonl`. Write before yielding

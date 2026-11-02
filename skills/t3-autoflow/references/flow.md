@@ -12,7 +12,9 @@
 3. For publication, verify `gh auth status`, remote, base, and repository access.
    Local-only runs do not need GitHub. Record original branch and base SHA.
 4. Create the external flow directory and record the parent thread and checkout.
-   After plan agreement, create `autoflow/<flow-id>` in this checkout. No worktrees.
+   After plan agreement, create `autoflow/<flow-id>` in this checkout as the flow
+   branch. Choose shared or T3-managed worktree isolation for delegates using
+   [the runtime contract](runtime.md#checkout-isolation).
 
 ## Plan and human gate
 
@@ -38,7 +40,9 @@ Process tasks in dependency order. For each task:
    writer. Ask it to implement the assigned scope, leave changes for parent
    inspection, avoid committing/pushing, and return a `coder` result. It must not
    run suites; the parent runs the discovered unit command.
-2. Inspect its diff and result. Run unit tests with the check helper. On failure,
+2. Inspect its diff and result. For an isolated coder, integrate its changes into
+   the flow branch using the runtime contract before verification. Run unit tests
+   in the flow checkout with the check helper. On failure,
    testRunner diagnoses the exact log and command without editing. Return its
    findings as a `review` result and route a fresh coder fix. Never accept a
    passing test claim in place of an actual successful command result.

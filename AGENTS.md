@@ -2,7 +2,8 @@
 
 This repository contains a portable skill, not a workflow service. T3 owns child
 execution, cancellation, and completion/CI wakeups. Do not add custom process
-registries, polling loops, worktree management, or fallback execution backends.
+registries, polling loops, custom worktree management, or fallback execution backends.
+T3-managed worktree isolation through delegation is supported.
 
 Keep the skill self-contained under `skills/t3-autoflow/`. Discover project checks
 from repository instructions and source artifacts. Discover models/providers

@@ -15,11 +15,41 @@ A disabled requested provider or unsupported requested option is a blocker, not
 permission to substitute. Consult capabilities again after an error or a user-named
 provider change, following the current host instructions.
 
-For each task, use `delegate_task` with `isolation: "shared"`, the appropriate
+For each task, use `delegate_task` with the chosen `isolation`, the appropriate
 `role`, and explicit `target: {providerInstanceId, model, options}`. Use a stable
 `clientRequestId` for the intended submission and record the returned task ID.
 Do not assume that request IDs provide crash-safe deduplication. Omit runtimeMode
 unless the user explicitly selected one; inherit permissions.
+
+### Checkout isolation
+
+Use `isolation: "shared"` for work in the flow checkout, or `isolation: "worktree"`
+when the user requests isolation or the task benefits from a separate checkout.
+Let T3 create and manage the worktree through the delegation tool. Never run
+shell worktree setup or put checkout creation instructions in a child's brief.
+If the requested isolation is unavailable, report the blocker instead of silently
+switching to shared execution.
+
+Record the checkout and branch returned by T3. An isolated child works in its
+assigned checkout, not the parent's path. Verify its starting revision matches
+the intended task base before editing. Worktrees do not inherit uncommitted
+changes. Before delegating dependent work, commit the accepted flow changes and
+use the live tool schema to select that revision. If T3 cannot provide the
+required starting content, stop and reconcile before proceeding.
+
+After an isolated coder finishes, inspect its actual checkout and diff. The
+parent commits only the intended changes there and integrates those commits
+into the flow branch, for example by cherry-picking. Resolve conflicts through
+the single-writer process. Record source and integrated revisions, then run the
+normal checks and reviews on the integrated content in the flow checkout.
+An isolated child's result alone does not establish that integration succeeded.
+
+Reviews of uncommitted flow changes use shared isolation. An isolated reviewer
+must inspect the exact committed candidate revision, including the same diff
+base. Confirm that revision before accepting its verdict. Keep the existing
+dependency order and writer freeze during checks and reviews; worktree support
+does not introduce parallel implementation. Preserve worktrees with outstanding
+changes for recovery and leave lifecycle management to T3.
 
 T3's tool role is separate from the autoflow model role. Map architect to
 `design`, coder tiers to `implementation`, testRunner to `test`, checker and
