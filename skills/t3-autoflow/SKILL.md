@@ -27,6 +27,10 @@ Use [validation](references/validation.md) for handoff and check helpers.
   adversaries re-review until no fixes remain or the original coder stops for
   lack of progress. Coders can request architect arbitration. Use the role
   preferences in discovery and the briefs in the flow reference.
+- Before publication or local handoff, the first planning architect reviews the
+  integrated code against every success criterion. Require a validated `review`
+  pass on the exact candidate; changes invalidate it. See the final review in
+  the flow reference.
 - GPT Terra handles all test runs and GitHub interactions, including PR operations.
   Send test and PR failures to a coder. Include context in each brief; children
   inherit no history.
@@ -53,7 +57,8 @@ role results. Terra may write command evidence to paths assigned in its brief.
 Persist the flow checkout path, each delegate's isolation and returned checkout/branch,
 integration revisions, parent thread ID/link, branch/base, authorized actions,
 selected models, original coder ownership, findings and fix attempts, discovered
-checks and their sources, accepted plan, current phase/task, child task IDs and
+checks and their sources, accepted plan, final architect review and its candidate
+revision, current phase/task, child task IDs and
 thread links, last verified revision, PR URL, and whether merge was attempted. Append
 significant events and evidence paths to `ledger.jsonl`. Write before yielding
 and before external mutations; a ledger is a handoff record, not a process manager.
