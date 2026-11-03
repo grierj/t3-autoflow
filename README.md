@@ -1,12 +1,28 @@
 # T3 autoflow
 
-A portable skill for autonomous coding in T3 Code. Give it a goal; the parent
-coordinates planning, implementation, independent reviews, project checks, and
+A portable skill for autonomous coding in T3 Code. Give it a goal; a workflow lead
+coordinates planning, implementation, adversarial reviews, project checks, and
 optional PR publication and merge. T3 owns child execution and CI wakeups.
 
 The agent discovers testing instructions from the project and selects models
 from T3's live provider/model catalog according to each role. Your prompt can
-override those choices. There are no setup files or fixed model maps to maintain.
+override those choices. There are no setup files or fixed provider/model IDs to maintain.
+
+- GPT 6.1 Terra or equivalent leads the workflow.
+- GPT Astra, Claude Opus, and Muse Wonder Full are the architect pool. Use two
+  when available and agree on the plan, modular slices, implementation details,
+  and success criteria.
+- Claude Sonnet and GPT Sol own code implementation.
+- Sonnet, Sol, Muse Spark, and Grok 4.7 review as adversaries. Prefer a reviewer
+  who did not implement the work, without requiring it.
+- Muse Spark, GPT Terra at maximum effort, and Claude Sonnet handle small fixes.
+  Fixer changes go back to the owning coder before adversaries re-review.
+- GPT Terra runs all tests and handles all GitHub interactions and PR operations.
+  Test failures and PR breakage return to a coder.
+
+Repeat fixes and adversary review until no fixes remain or the original coder
+reports no progress. The coder can ask an architect to arbitrate. Larger changes
+stay with coders. There are no separate mandatory specialist gates.
 
 ## Install
 
@@ -31,14 +47,14 @@ Python 3 and Git are required. Publication also needs GitHub access.
 - `Use $t3-autoflow status`, `stop`, or `resume` with a flow ID.
 
 The skill reads repository instructions, manifests, CI, and test scripts to choose
-checks. Planning questions go to you. After agreement, children report blockers
-to the parent for arbitration and recovery. Publication and merge follow the
+checks. Planning questions go to you. After agreement, implementation blockers return
+to the owning coder, who can request architect arbitration. Publication and merge follow the
 scope you authorized.
 
 Delegates can share the flow checkout or use T3-managed worktrees. Ask for
 worktree isolation when you want a separate checkout. T3 creates and manages
 the worktrees; the parent integrates isolated changes into the flow branch
-before running checks and reviews.
+before Terra runs checks and adversaries review.
 
 See the [skill](skills/t3-autoflow/SKILL.md),
 [discovery rules](skills/t3-autoflow/references/discovery.md), and
@@ -52,8 +68,8 @@ not enforce Pi-style output schemas, command gates, or read-only reviewer tools.
 Permission prompts can still interrupt. Artifacts support manual reconciliation
 and resume, not automatic crash restart or exactly-once execution.
 
-The flow uses one writer per checkout, sequential implementation tasks, two independent adversaries,
-specialist gates, and at most one merge-commit attempt. An ambiguous merge needs
+The flow uses one writer per checkout, sequential implementation tasks, a coder-owned
+fix and review loop, and at most one merge-commit attempt. An ambiguous merge needs
 reconciliation, never an automatic retry. Artifacts live outside the project under
 `~/.local/state/t3-autoflow/<flow-id>/`.
 

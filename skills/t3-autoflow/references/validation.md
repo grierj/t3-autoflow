@@ -12,22 +12,32 @@ python3 <skill-dir>/scripts/validate.py result review <response.json>
 ```
 
 Kinds are `plan`, `checker`, `coder`, `review`, and `arbitrator`. Every field in a
-contract is required; extra fields fail. Use empty arrays when appropriate.
+contract is required; extra fields fail. A plan task's `implementation` array
+contains its implementation steps and interface decisions. The second architect
+uses `checker` to agree on the whole plan or return objections. Fixers use the
+`coder` contract, returning `done` or `blocked`. Only the owning coder uses
+`stalled` to stop for lack of progress or `arbitrate` to request architect judgment.
+An architect uses `arbitrator` to recommend continuing, revising the plan, or
+terminating. Arbitration does not waive findings. Use empty arrays when appropriate.
 Validation rejects duplicate IDs, contradictory review/checker verdicts, and
 plan dependencies that are not already defined. Tasks must be topologically
-ordered. The parent must still verify finding closure, severity-specific
-arbitration permissions, and evidence against the actual diff. Syntactically valid
-fabricated evidence does not pass a gate.
+ordered. The parent must still verify finding closure, role-specific status
+permissions, and evidence against the actual diff. Syntactically valid fabricated
+evidence does not establish success.
+
+Older saved plans without implementation details and arbitration results with
+deferrals do not satisfy these contracts. On resume, request fresh role results
+for remaining work. Preserve old evidence rather than rewriting it to pass.
 
 ## Checks
 
-The parent records a discovered command as an internal check artifact with
+The workflow lead records a discovered command as an internal check artifact with
 `id`, `argv`, and positive integer `timeoutMs`. This is execution evidence, not
 user-maintained setup. Choose a timeout from project guidance or expected runtime
 and record it; do not ask the user to create a file. For example, if the project
 instructs `npm test`, record `{"id":"unit","argv":["npm","test"],"timeoutMs":120000}`.
 Preserve the project's actual command, working directory, and environment. Freeze writers,
-then run:
+then have Terra run:
 
 ```sh
 python3 <skill-dir>/scripts/run-check.py <check.json> <repo> <new-log> <new-evidence.json>
@@ -35,7 +45,7 @@ python3 <skill-dir>/scripts/run-check.py <check.json> <repo> <new-log> <new-evid
 
 The helper returns nonzero on failure, timeout, or execution error. It never
 reuses evidence filenames. A killed helper may leave an incomplete evidence file;
-that is a failed verification, not a pass. The parent must inspect the recorded
+that is a failed verification, not a pass. Terra must inspect the recorded
 exit code and output, and compare checkout content before/after. HEAD alone does
 not identify uncommitted changes. Tests run in the foreground; timeout kills the
 direct command only. Commands that leave background descendants need their own

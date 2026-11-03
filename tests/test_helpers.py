@@ -34,10 +34,12 @@ class Validation(unittest.TestCase):
 
     def test_plan_dependencies(self):
         task = dict(id='one', title='Implement', complexity='low', files=['x'],
+                    implementation=['Expose the parser through the existing entrypoint'],
                     acceptance=['Output matches expected'], dependencies=[], ui=False)
         plan = dict(goal='Example', tasks=[task], questions=[])
         v.result('plan', plan)
-        for tasks in [[task, task], [dict(task, dependencies=['missing'])],
+        for tasks in [[task, task], [dict(task, implementation=[])],
+                      [dict(task, dependencies=['missing'])],
                       [dict(task, dependencies=['one'])]]:
             with self.assertRaises(ValueError):
                 v.result('plan', dict(plan, tasks=tasks))
@@ -46,7 +48,7 @@ class Validation(unittest.TestCase):
         v.result('coder', dict(status='blocked', summary='Missing dependency', changedFiles=[],
                                deviations=[], judgementCalls=[]))
         v.result('arbitrator', dict(verdict='terminate', evidence='Repeated failure',
-                                    action='Install dependency', dispositions=[]))
+                                    action='Install dependency'))
         with self.assertRaises(ValueError):
             v.result('checker', dict(verdict='agree', objections=['missing task'], questions=[]))
         with tempfile.TemporaryDirectory() as directory:
@@ -54,6 +56,22 @@ class Validation(unittest.TestCase):
             path.write_text('{"verdict":"pass","verdict":"blocked"}')
             with self.assertRaises(ValueError):
                 v.read(path)
+
+    def test_coder_loop_decisions(self):
+        for status in ['done', 'blocked', 'stalled', 'arbitrate']:
+            with self.subTest(status=status):
+                v.result('coder', dict(status=status, summary='Attempt history and decision',
+                                      changedFiles=[], deviations=[], judgementCalls=[]))
+        with self.assertRaises(ValueError):
+            v.result('coder', dict(status='retry-forever', summary='No decision',
+                                  changedFiles=[], deviations=[], judgementCalls=[]))
+
+    def test_arbitration_cannot_carry_deferrals(self):
+        with self.assertRaises(ValueError):
+            v.result('arbitrator', dict(verdict='progressing', evidence='Open finding',
+                                       action='Continue', dispositions=[dict(
+                                           findingId='one', action='defer-record',
+                                           reason='Ignore it', dependencyIds=[])]))
 
 
 class CheckExecution(unittest.TestCase):

@@ -21,19 +21,18 @@ TEXT = dict(type='string', minLength=1)
 TEXTS = array(TEXT)
 COMPLEXITY = enum('low', 'medium', 'high')
 TASK = obj(dict(id=TEXT, title=TEXT, complexity=COMPLEXITY, files=array(TEXT, 1),
-                acceptance=array(TEXT, 1), dependencies=TEXTS, ui=dict(type='boolean')))
+                implementation=array(TEXT, 1), acceptance=array(TEXT, 1),
+                dependencies=TEXTS, ui=dict(type='boolean')))
 FINDING = obj(dict(id=TEXT, severity=enum('P0', 'P1', 'P2'), summary=TEXT,
                    evidence=TEXT, fix=TEXT, complexity=COMPLEXITY))
 SCHEMAS = {
     'plan': obj(dict(goal=TEXT, tasks=array(TASK, 1), questions=TEXTS)),
     'checker': obj(dict(verdict=enum('agree', 'changes', 'questions'), objections=TEXTS, questions=TEXTS)),
-    'coder': obj(dict(status=enum('done', 'blocked'), summary=TEXT, changedFiles=TEXTS,
+    'coder': obj(dict(status=enum('done', 'blocked', 'stalled', 'arbitrate'), summary=TEXT, changedFiles=TEXTS,
                       deviations=TEXTS, judgementCalls=TEXTS)),
     'review': obj(dict(verdict=enum('pass', 'findings', 'blocked'), summary=TEXT, findings=array(FINDING))),
     'arbitrator': obj(dict(verdict=enum('progressing', 'try-fix', 'terminate'), evidence=TEXT,
-                           action=TEXT, dispositions=array(obj(dict(findingId=TEXT,
-                           action=enum('fix', 'defer-dependency', 'defer-record'), reason=TEXT,
-                           dependencyIds=TEXTS)))))
+                           action=TEXT))
 }
 
 
@@ -78,10 +77,6 @@ def result(kind, value):
         require((value['verdict'] == 'findings') == bool(value['findings']), 'verdict contradicts findings')
         ids = [f['id'] for f in value['findings']]
         require(len(ids) == len(set(ids)), 'duplicate finding ID')
-    elif kind == 'arbitrator':
-        for disposition in value['dispositions']:
-            require((disposition['action'] == 'defer-dependency') == bool(disposition['dependencyIds']),
-                    'dependency deferral requires dependencies; other dispositions must not have them')
     return value
 
 

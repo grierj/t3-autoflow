@@ -3,116 +3,118 @@
 ## Preflight
 
 1. Read repository instructions. Confirm a clean Git checkout and no active flow
-   or writer targeting it. Never stash or discard existing work. If ownership
-   cannot be established, stop before spending on children.
-2. Discover tests from project instructions, manifests, CI, and test scripts.
-   Select models from T3's live provider/model catalog by role, honoring prompt
-   overrides. Follow [discovery.md](discovery.md); record command sources, selected
-   targets, diversity warnings, and explicit authorization for publish/merge.
-3. For publication, verify `gh auth status`, remote, base, and repository access.
-   Local-only runs do not need GitHub. Record original branch and base SHA.
+   or writer targeting it. Never stash or discard existing work.
+2. Discover project checks and select roles through T3 using
+   [discovery.md](discovery.md). Record targets, check sources, and authorization
+   for local work, publication, and merge. Establish the workflow lead and Terra
+   operations role using [runtime.md](runtime.md).
+3. For publication, Terra verifies GitHub access, remote, and base. Local-only
+   flows need no GitHub access. Record the original branch and base SHA.
 4. Create the external flow directory and record the parent thread and checkout.
-   After plan agreement, create `autoflow/<flow-id>` in this checkout as the flow
-   branch. Choose shared or T3-managed worktree isolation for delegates using
-   [the runtime contract](runtime.md#checkout-isolation).
+   After plan agreement, create `autoflow/<flow-id>` as the flow branch. Use shared
+   or T3-managed worktree isolation as described in the runtime contract.
 
-## Plan and human gate
+## Plan with architects
 
-Architect: inspect the repository; return a `plan`. Tasks must have testable
-acceptance criteria, file scope, dependency IDs, low/medium/high complexity, and
-an explicit UI flag. Prefer requested behavior over a mechanism unless the user
-made that mechanism binding. Express genuine unknowns in `questions`.
+The first architect inspects the repository and returns a `plan`. Divide the work
+into modular coder assignments with file scope, dependencies, implementation
+steps and interfaces, testable success criteria, complexity, and a UI flag.
+Put implementation details in each task's `implementation` field and success
+criteria in `acceptance`. Express genuine unknowns in `questions`.
 
-Checker: independently challenge the plan for missing tasks, incorrect complexity,
-untestable criteria, and hidden dependencies. Return a `checker` verdict with
-concrete objections. Use a distinct model.
+When a second architect is available, have it inspect the repository and challenge
+all four parts: plan, slices, implementation details, and success criteria.
+It returns a `checker` verdict. Revise through the first architect and have the
+second architect check the revised plan until both agree. With one architect,
+proceed without a checker and record the availability limit. If the architects
+cannot resolve a disagreement, surface it rather than pretending they agreed.
 
-Questions go to the human during this phase. Record answers, revise the plan, and
-check it again. Allow two architecture rounds, then surface unresolved objections.
-On agreement with no open questions, freeze the plan and begin without a redundant
-approval request. Existing authorization still controls publication and merge.
+Relay planning questions to the user and record answers. Once the architects
+agree and questions are resolved, freeze the plan and begin without a redundant
+approval request. Publication and merge still require the user's authorization.
 
-## Implement, verify, and review
+## Implement and review
 
-Process tasks in dependency order. For each task:
+Process slices in dependency order, with one writer per checkout:
 
-1. Start a fresh coder selected for the task's complexity. It is the only code
-   writer. Ask it to implement the assigned scope, leave changes for parent
-   inspection, avoid committing/pushing, and return a `coder` result. It must not
-   run suites; the parent runs the discovered unit command.
-2. Inspect its diff and result. For an isolated coder, integrate its changes into
-   the flow branch using the runtime contract before verification. Run unit tests
-   in the flow checkout with the check helper. On failure,
-   testRunner diagnoses the exact log and command without editing. Return its
-   findings as a `review` result and route a fresh coder fix. Never accept a
-   passing test claim in place of an actual successful command result.
-3. Run adversaryA and adversaryB on the same frozen diff, independently and fresh.
-   Each returns a `review`. Require evidence, severity, and a smallest proposed
-   fix for each finding. Both models must differ from each other and every model that wrote this task. Read-only tasks can run concurrently, but no writer runs alongside them.
-4. Fix P0/P1 findings. Send P2 findings to the arbitrator for explicit fix-now,
-   defer-with-dependency, or documented-PR-deferral disposition. Never silently
-   drop them. After a fix, rerun unit tests and both adversaries, supplying prior
-   findings so reviewers check closure as well as new defects.
-5. Run correctness, security, and efficiency gates, each returning `review`.
-   Correctness checks acceptance and regressions; security requires concrete
-   attack paths; efficiency reports material cost regressions, not style.
-   Run the UI gate if the task's UI flag or actual changed files show UI work.
-   It checks states, accessibility, and visible behavior, with a written account.
-   Gate models must differ from the task's writers and adversaries. Accepted
-   findings become scoped fix tasks and repeat the same verification cycle.
+1. Assign a coder from the coder pool as the slice's owner. It implements the
+   scope, including test code, and returns a `coder` result. It leaves changes
+   for inspection without committing or pushing. All test execution goes to
+   Terra, including targeted reproductions and checks proposed by other roles.
+2. Inspect the diff and integrate isolated changes into the flow branch. Terra
+   runs the applicable discovered checks using the check helper. Send failures
+   and exact logs to the owning coder for diagnosis and repair.
+3. Adversaries inspect the same frozen candidate and return `review` results.
+   Ask for concrete evidence, severity, and the smallest proposed fix. Cover
+   correctness, security, efficiency, and UI behavior where relevant within these
+   reviews. Prefer reviewers who did not write the code, without making that a
+   condition of proceeding. Read-only reviews may run concurrently.
+4. Route small, scoped fixes to a fixer. Larger changes stay with the owning
+   coder. A fixer returns a `coder` result and its changes to the owning coder,
+   who inspects, accepts or revises them, and remains responsible for the slice.
+   A fixer cannot declare the slice complete or decide that the loop has stalled.
+5. After the coder accepts the changes, Terra reruns affected checks. Adversaries
+   re-review the resulting candidate with prior findings and fix evidence. Use
+   fresh review tasks. Repeat until no fixes remain or the original coder reports
+   that no progress is being made.
 
-Record progress after each iteration: completed tasks, open findings by severity,
-failing test names, normalized failure signature, and diffstat. Same failure for
-three consecutive iterations, no measured change, blocked results, or two upward
-retaggings send the evidence to the arbitrator. Coding has no arbitrary round cap.
+Keep findings and failed checks open until evidence shows closure. Record each
+attempt and give the owning coder the accumulated history. Do not waive an open
+finding to call the slice complete. A blocked review is not a clean review.
+There is no fixed iteration cap, automatic complexity escalation, or mandatory
+arbitration after a failure count.
 
-Arbitrator: return `arbitrator` with evidence for progressing, try-fix, or terminate.
-It may split/reorder tasks or raise complexity, never waive P0/P1. For try-fix,
-request concrete plan tasks from the architect and validate them before queuing.
-Give the architect the existing plan, findings, and failed attempts. A repeated
-failure from that fix goes directly back to arbitration. If permission or runtime
-limits prevent continuing, record the blocker; an arbitrator cannot override them.
+The owning coder can return `arbitrate` to request an architect's judgment. The
+architect returns an `arbitrator` result based on the plan, evidence, and attempts.
+If the architect recommends changed slices or implementation details, obtain a
+new validated `plan` and the second architect's agreement when available.
+Reconcile completed work and task IDs before replacing the remaining queue.
+Return the decision to the owning coder, then continue through Terra checks and
+adversary review. Arbitration cannot turn failed verification into a pass.
 
-Treat the arbitrator's free-text action as evidence for the architect, never as
-executable queue changes. Every split, reorder, or complexity change must return
-through a new validated architect plan. Reconcile task IDs and completed work
-before replacing the remaining queue.
+If the original coder returns `stalled`, stop with the remaining findings and
+attempts recorded. Do not have the workflow lead or a fixer override that decision
+with another automatic retry. Runtime or permission blockers also stop the flow
+when they cannot be resolved within the authorized scope.
 
 ## Final checks and publication
 
-When the queue empties, run all discovered, applicable e2e commands. Failures reopen the task
-queue, including unit tests, reviews, and gates. Rerun the full e2e set after fixes.
+When all slices are complete, Terra runs the full applicable project checks,
+including integration and e2e suites. Failures return to the owning coder and
+reopen the same fix and adversary review cycle. Rerun affected checks after fixes
+and the full final check set before publication.
 
-Before publication, inspect and commit only the flow's intended changes. Verify
-unit and e2e results still match that exact content, with no active children.
-For local-only scope, finish here with a verified branch and report it.
-For authorized publication, fetch the base. If it moved, rebase locally, resolve through the single-writer
-process, and rerun unit/e2e. Re-review any changed implementation. Never publish
-untested conflict resolutions. Use force-with-lease only for the flow's own branch
-when a previously published head was rebased.
+Terra handles all GitHub interactions and PR operations. Before publication,
+inspect and commit only intended changes. Verify evidence matches the exact
+candidate with no active writers. For local-only scope, finish with the verified
+branch and report it. For authorized publication, fetch the base. If it moved,
+update the branch and send conflicts or implementation changes to a coder.
+Terra reruns checks and adversaries re-review changed code before publication.
+Use force-with-lease only for the flow's own previously published, rebased branch.
 
-Push and open a ready PR, never a draft. The body includes goal, completed
-tasks and models, changed files, deviations, judgement calls, fix-task origins,
-verification, UI account, model diversity warnings, and usage if available. Keep
-this record updated after fixes. Do not link an inaccessible local plan as if it
-were a shared artifact; include its useful summary in the PR.
+Terra pushes and opens a ready PR. Include the goal, implementation summary,
+verification, unresolved limitations, and relevant model overlap or plan changes.
+Keep the body current after fixes. Include a useful plan summary rather than a
+link to an inaccessible local artifact. Link the PR immediately as described in
+runtime.md.
 
-Link immediately as described in runtime.md. If CI/reviews are pending and the
-requested work includes waiting or merging, register a T3 watch and yield. A failed
-check becomes a fix task, then local tests/reviews, push/link, and CI again. No CI
-checks reported counts as pass, recorded explicitly; query errors do not count as
-no checks. Branch protection and required reviews still apply.
+When requested work awaits CI or reviews, the host parent registers a T3 watch
+and yields. On a wake, Terra inspects checks, review comments, conflicts, and the
+head SHA. PR breakage returns to a coder, then Terra checks, adversary re-review,
+and Terra push. Link again and wait through T3 as needed. No reported CI checks
+means no CI suite was reported, not that a suite ran successfully. Query failures
+are blockers. Branch protection and required reviews still apply.
 
-Merge only if authorized, all gates pass on the current head, and GitHub reports
-readiness. Record `mergeAttempted: true` BEFORE attempting a merge-commit once.
-Never squash, rebase-merge, bypass protection, or retry an ambiguous merge. Read
-PR state to establish the outcome. Unwatch when finished or handing back.
+Terra merges only when authorized, checks and reviews pass on the current head,
+and GitHub reports readiness. Record `mergeAttempted: true` before one merge-commit
+attempt. Never bypass protection or retry an ambiguous merge. Inspect PR state
+to establish the outcome. The host parent unwatches when finished or handing back.
 
 ## Termination
 
 Cancel outstanding children, remove the watch, and preserve the branch and PR.
-Write `RECOVERY.md` with state, last good commit, remaining tasks, exact blocker,
-failed attempts, arbitrator reasoning, one most likely root cause, and one first
-human action. Explain how to resume in the recorded parent thread and how the
-user can abandon the work. Do not delete anything as part of termination. Include
-recovery in the final reply; post a PR comment only if messaging was authorized.
+Write `RECOVERY.md` with the state, last verified revision, remaining tasks,
+blocker or coder's stalled decision, failed attempts, and any architect reasoning.
+Give a concrete next action and explain how to resume in the recorded parent
+thread. Do not delete work. Include recovery in the final reply. Terra posts a
+PR comment only when messaging was authorized.
