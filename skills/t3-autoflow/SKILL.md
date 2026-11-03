@@ -1,12 +1,12 @@
 ---
 name: t3-autoflow
-description: Run a planned, multi-model coding flow in T3 Code with independent reviews, project-discovered tests, and optional PR publication and merge. Use when the user asks for autoflow or its status, stop, or resume. Requires T3 delegation tools; does not apply to ordinary coding requests.
+description: Run a planned, multi-model coding flow in T3 Code with adversarial reviews, project-discovered tests, and optional PR publication and merge. Use when the user asks for autoflow or its status, stop, or resume. Requires T3 delegation tools; does not apply to ordinary coding requests.
 ---
 
 # T3 autoflow
 
-Coordinate the flow in the current T3 parent thread. T3 owns child execution,
-cancellation, and completion wakeups. This is an agent-followed procedure, not a
+Use GPT 6.1 Terra or equivalent to lead the workflow in the current T3 thread.
+T3 owns child execution, cancellation, and completion wakeups. This is an agent-followed procedure, not a
 sandboxed workflow engine. Read [the runtime contract](references/runtime.md)
 before starting or resuming; read [the flow procedure](references/flow.md) to run.
 Read [discovery](references/discovery.md) to choose models and find project tests.
@@ -22,30 +22,39 @@ Use [validation](references/validation.md) for handoff and check helpers.
   follow the isolation and integration rules in the runtime contract.
 - Discover available providers and models through T3 and select them by role.
   Honor prompt overrides; record the choices. No silent substitution or CLI relay.
-- Delegate planning, coding, review, and arbitration using the role briefs in the
-  flow reference. Include all context in each brief; children inherit no history.
-- Request JSON only. Save the exact result outside the checkout and validate it
-  with `python3 <skill-dir>/scripts/validate.py result <kind> <file>` before using
+- Architects plan modular slices; use two agreeing architects when available.
+  Coders own implementation, fixers return small fixes to the owning coder, and
+  adversaries re-review until no fixes remain or the original coder stops for
+  lack of progress. Coders can request architect arbitration. Use the role
+  preferences in discovery and the briefs in the flow reference.
+- GPT Terra handles all test runs and GitHub interactions, including PR operations.
+  Send test and PR failures to a coder. Include context in each brief; children
+  inherit no history.
+- For architect, coder, fixer, and adversary handoffs, request JSON only. Save
+  the exact result outside the checkout and validate it with `python3 <skill-dir>/scripts/validate.py result <kind> <file>` before using
   its verdict. Do not derive control decisions from a prose summary or repair
   malformed results yourself. See the validator's `schemas` command for contracts.
+  Workflow decisions and Terra operations use the evidence rules in runtime.md.
 - Unit/e2e evidence comes from executing commands discovered in the project, never a coder's
   claim. Use `scripts/run-check.py` and inspect its JSON output and captured log.
-- Reviewers and gates inspect only. Their read-only behavior is an instruction,
+- Architects and adversaries inspect only. Their read-only behavior is an instruction,
   not a T3 tool restriction. Unexpected changes invalidate the review.
-- P0/P1 findings cannot be waived. Record explicit frontier-model disposition of
-  every P2. Do not hide failed gates, provider errors, or unresolved findings.
+- Do not waive open findings or hide failed checks, provider errors, or blockers.
 - Children return questions or blocked results to the parent. After planning,
-  route blockers to the arbitrator and write recovery guidance if work terminates.
+  return implementation blockers to the owning coder and write recovery guidance
+  if work terminates.
   T3/provider permission prompts can still interrupt; never bypass them.
 
 ## Durable handoff
 
 Store artifacts outside the checkout, for example under
-`~/.local/state/t3-autoflow/<flow-id>/`. Only the parent writes these artifacts.
+`~/.local/state/t3-autoflow/<flow-id>/`. The parent writes flow state and saved
+role results. Terra may write command evidence to paths assigned in its brief.
 Persist the flow checkout path, each delegate's isolation and returned checkout/branch,
 integration revisions, parent thread ID/link, branch/base, authorized actions,
-selected models, discovered checks and their sources, accepted plan, current phase/task, child task IDs and thread
-links, last verified revision, PR URL, and whether merge was attempted. Append
+selected models, original coder ownership, findings and fix attempts, discovered
+checks and their sources, accepted plan, current phase/task, child task IDs and
+thread links, last verified revision, PR URL, and whether merge was attempted. Append
 significant events and evidence paths to `ledger.jsonl`. Write before yielding
 and before external mutations; a ledger is a handoff record, not a process manager.
 

@@ -36,62 +36,54 @@ coding. Missing tooling, credentials, or a failing existing suite is a blocker
 to resolve, not a reason to silently skip it. Revisit test discovery when the
 implementation changes the build or test workflow.
 
-The flow reference uses unit and e2e as phase names. Run the applicable project
-checks at those phases; do not claim nonexistent suites passed. Record actual
+Terra runs applicable checks during implementation and the full set at final
+verification; do not claim nonexistent suites passed. Record actual
 commands, outcomes, and any explicitly agreed verification limits.
 
 ## Select targets from T3
 
-Use `orchestrator_capabilities` to discover enabled provider instances, available
-models, and supported options. Search the catalog when relevant models are omitted.
+Use the current T3 host's capability-discovery tools to find enabled provider
+instances, available models, and supported options. Search the catalog when relevant models are omitted.
 Choose explicit targets from what is available; no hard-coded model IDs, provider
 assumptions, or fixed role map is required from the user.
 
-Select models according to the work:
+Use these role preferences, resolving names to actual targets in the live catalog:
 
-- Architect: strong repository reasoning, planning, and architecture judgment.
-- Checker: a strong independent reasoning model that challenges assumptions and
-  acceptance criteria. Prefer a different provider from the architect.
-- Coder: a fast capable coding model for mechanical tasks, a balanced coding
-  model for ordinary changes, and a strong reasoning/coding model for difficult
-  tasks. Select the tier needed for the actual task, not three mandatory targets.
-- Adversaries A and B: strong code reviewers with distinct models, preferably
-  different providers, who look for concrete failures and regressions.
-- Correctness, security, efficiency, and UI gates: models capable in the relevant
-  specialty. UI work benefits from visual/browser capability when available.
-- Arbitrator: strong reasoning and judgment for weighing progress and evidence.
-- Test runner: a fast economical model able to diagnose command output accurately.
+| Role | Preferred models | Responsibility |
+| --- | --- | --- |
+| Workflow lead | GPT 6.1 Terra or equivalent | Run the workflow and route work between roles |
+| Architect | GPT Astra, Claude Opus, Muse Wonder Full | Plan, slice work, define implementation details and success criteria; arbitrate when a coder asks |
+| Coder | Claude Sonnet, GPT Sol | Own implementation and accept fixer changes |
+| Adversary | Claude Sonnet, GPT Sol, Muse Spark, Grok 4.7 | Review for concrete defects and regressions |
+| Fixer | Muse Spark, GPT Terra at maximum effort, Claude Sonnet | Make small, scoped fixes and return them to the owning coder |
+| Tests and GitHub | GPT Terra | Run all tests and handle all GitHub interactions and PR operations |
 
-Use supported reasoning options that fit the difficulty. Do not infer capability
-solely from a model name or choose an unsupported option. When the catalog gives
-little detail, use available model descriptions and known capabilities; if a
-material choice is unclear, ask during planning rather than inventing metadata.
-Reuse a suitable model for roles that do not require independence. Select the UI
-role only when needed. Token prices need not be known to start the flow.
+These are model preferences, not provider IDs or a static catalog. Honor prompt
+overrides. Resolve each name through T3 and use supported options. Terra fixers
+require the catalog's maximum reasoning effort setting. Do not invent an option
+or silently lower that effort. The workflow-equivalent allowance does not by
+itself authorize replacing Terra for tests and GitHub.
 
-Honor explicit prompt constraints on providers, models, budget, and effort. A
-request such as 'use Claude for planning' narrows discovery to that provider;
-choose its suitable available model. An exact model request must be honored or
-reported unavailable. Do not replace a user's unavailable choice without asking.
+Use two distinct architects when available. Both must agree on the plan, slices,
+implementation details, and success criteria. With only one available architect,
+record that limitation and proceed with its plan. Prefer adversaries who did not
+implement the work; this is helpful, not required. Select reviewers from the
+adversary pool as the work warrants, without requiring a fixed count or separate
+specialist gates. Record any overlap with writers.
 
-Before launching work, establish that independent roles can be filled: architect
-and checker differ; the two adversaries differ from each other and all writers
-of the task; gate models differ from its writers and adversaries. The same model
-behind two provider instances does not establish independence. Prefer different
-providers; record weaker diversity when only distinct models from one provider
-are available. If catalog availability or prompt constraints make independence
-impossible, surface that conflict during planning instead of silently weakening it.
+Keep the original coder's identity and task context across fix rounds. A fresh
+child can continue that ownership using the same selected target and the full
+history of findings and attempts. Fixers do not replace the owning coder.
 
-Record selected provider/model/options and a short reason for each role when
-used. Keep selections stable across retries and re-reviews. If a selected model
-becomes unavailable, report it and follow the runtime's bounded failure path.
-A different model is a new decision, not an invisible fallback. Retagging a coding
-task upward also requires rechecking independence against every model that has
-written or will review that task.
+Record provider, model, options, and role before launch. Keep selections stable
+across retries and re-reviews. If a needed role has no available target, report
+that limitation and ask for a choice rather than silently substituting. An exact
+prompt choice must be honored or reported unavailable. After a provider error,
+follow the runtime's bounded retry path.
 
 ## Discover publication defaults
 
-When publication is authorized, inspect the repository's Git remotes, upstream,
+When publication is authorized, have Terra inspect the repository's Git remotes, upstream,
 contributor instructions, and GitHub default branch to determine destination and
 base. Respect prompt overrides and existing PR targets. Resolve ambiguous forks
 or branches during planning. Local-only flows require no remote or GitHub login.
