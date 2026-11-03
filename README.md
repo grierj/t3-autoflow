@@ -22,7 +22,10 @@ override those choices. There are no setup files or fixed provider/model IDs to 
 
 Repeat fixes and adversary review until no fixes remain or the original coder
 reports no progress. The coder can ask an architect to arbitrate. Larger changes
-stay with coders. There are no separate mandatory specialist gates.
+stay with coders. After final checks, the first planning architect reviews the
+integrated code against every success criterion before PR publication or local
+handoff. Gaps return to the same fix loop. Changes to the candidate require a
+fresh architect review, including fixes made after the PR opens.
 
 ## Install
 

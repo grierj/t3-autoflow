@@ -81,7 +81,7 @@ changes for recovery and leave lifecycle management to T3.
 
 T3's tool role is separate from the autoflow model role. Map architect to
 `design`, coders and fixers to `implementation`, Terra checks to `test`, the second
-architect and adversaries to `review`, and architect arbitration or workflow
+architect, final architect review, and adversaries to `review`, and architect arbitration or workflow
 coordination to `general`. Select a supported role for Terra GitHub operations.
 
 The brief must contain the repository path, branch, read/write scope, goal,

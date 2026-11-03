@@ -77,23 +77,58 @@ attempts recorded. Do not have the workflow lead or a fixer override that decisi
 with another automatic retry. Runtime or permission blockers also stop the flow
 when they cannot be resolved within the authorized scope.
 
-## Final checks and publication
+## Final checks and architect review
 
 When all slices are complete, Terra runs the full applicable project checks,
 including integration and e2e suites. Failures return to the owning coder and
 reopen the same fix and adversary review cycle. Rerun affected checks after fixes
 and the full final check set before publication.
 
-Terra handles all GitHub interactions and PR operations. Before publication,
-inspect and commit only intended changes. Verify evidence matches the exact
-candidate with no active writers. For local-only scope, finish with the verified
-branch and report it. For authorized publication, fetch the base. If it moved,
-update the branch and send conflicts or implementation changes to a coder.
-Terra reruns checks and adversaries re-review changed code before publication.
+Inspect and commit only intended changes. For authorized publication, Terra
+fetches the base. If it moved, update the branch and send conflicts or
+implementation changes to a coder. Terra reruns checks and adversaries re-review
+changed code before the final architect review. Freeze writers and verify that
+all evidence matches the exact candidate.
+
+Delegate a fresh, read-only review to the first planning architect using its
+recorded target. Supply the accepted plan and any agreed revisions, every task's
+`acceptance` criteria, the candidate SHA and diff base, the full integrated diff,
+resolved findings, and Terra's final check evidence. The architect inspects the
+actual code and cross-slice behavior against the goal, implementation decisions,
+and every success criterion. Passing tests or coder summaries alone do not prove
+completion. Any additional test execution goes to Terra.
+
+Request the existing `review` JSON contract. In `summary`, identify the reviewed
+SHA and map each task ID and acceptance criterion to code locations and
+verification evidence, including any agreed verification limits. Return
+`findings` for unmet criteria or incorrect implementation, and `blocked` when
+the evidence is insufficient to judge completion. Return `pass` only when every
+criterion is satisfied. Save and validate the exact response, then verify its
+coverage against the plan. Record the result path and reviewed revision in flow
+state. A missing criterion or stale review cannot authorize publication.
+
+Send findings to the owning coder through the existing fix, Terra check, and
+adversary review cycle. Then repeat final checks and request a fresh architect
+review with prior findings and fix evidence. Preserve the existing stalled and
+blocked termination rules. Do not weaken success criteria to obtain a pass;
+plan revisions require the architect agreement described above.
+
+For local-only scope, finish with the architect-approved branch and report it.
+For publication, require the architect's validated `pass` on the exact candidate
+immediately before Terra pushes and opens the PR. Changes to the candidate or
+accepted plan invalidate that pass, including base updates and later PR fixes.
+Repeat the applicable checks, adversary reviews, and final architect review
+before publishing the changed candidate. On resume, reuse a final review only
+after verifying that its candidate, plan, and supporting evidence still match.
+
+## Publication and merge
+
+Terra handles all GitHub interactions and PR operations.
 Use force-with-lease only for the flow's own previously published, rebased branch.
 
 Terra pushes and opens a ready PR. Include the goal, implementation summary,
-verification, unresolved limitations, and relevant model overlap or plan changes.
+verification, the architect's success-criteria review, unresolved limitations,
+and relevant model overlap or plan changes.
 Keep the body current after fixes. Include a useful plan summary rather than a
 link to an inaccessible local artifact. Link the PR immediately as described in
 runtime.md.
@@ -101,7 +136,7 @@ runtime.md.
 When requested work awaits CI or reviews, the host parent registers a T3 watch
 and yields. On a wake, Terra inspects checks, review comments, conflicts, and the
 head SHA. PR breakage returns to a coder, then Terra checks, adversary re-review,
-and Terra push. Link again and wait through T3 as needed. No reported CI checks
+final architect review, and Terra push. Link again and wait through T3 as needed. No reported CI checks
 means no CI suite was reported, not that a suite ran successfully. Query failures
 are blockers. Branch protection and required reviews still apply.
 

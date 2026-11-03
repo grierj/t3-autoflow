@@ -19,6 +19,10 @@ uses `checker` to agree on the whole plan or return objections. Fixers use the
 `stalled` to stop for lack of progress or `arbitrate` to request architect judgment.
 An architect uses `arbitrator` to recommend continuing, revising the plan, or
 terminating. Arbitration does not waive findings. Use empty arrays when appropriate.
+The final architect uses `review`. Its `summary` identifies the candidate SHA
+and maps every task's acceptance criteria to code and verification evidence.
+The parent checks coverage and freshness as described in [flow.md](flow.md);
+the schema validator does not establish that criteria were met.
 Validation rejects duplicate IDs, contradictory review/checker verdicts, and
 plan dependencies that are not already defined. Tasks must be topologically
 ordered. The parent must still verify finding closure, role-specific status

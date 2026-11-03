@@ -52,7 +52,7 @@ Use these role preferences, resolving names to actual targets in the live catalo
 | Role | Preferred models | Responsibility |
 | --- | --- | --- |
 | Workflow lead | GPT 6.1 Terra or equivalent | Run the workflow and route work between roles |
-| Architect | GPT Astra, Claude Opus, Muse Wonder Full | Plan, slice work, define implementation details and success criteria; arbitrate when a coder asks |
+| Architect | GPT Astra, Claude Opus, Muse Wonder Full | Plan, slice work, define implementation details and success criteria; arbitrate when a coder asks; review final code against the accepted plan |
 | Coder | Claude Sonnet, GPT Sol | Own implementation and accept fixer changes |
 | Adversary | Claude Sonnet, GPT Sol, Muse Spark, Grok 4.7 | Review for concrete defects and regressions |
 | Fixer | Muse Spark, GPT Terra at maximum effort, Claude Sonnet | Make small, scoped fixes and return them to the owning coder |
