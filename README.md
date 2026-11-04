@@ -57,7 +57,12 @@ scope you authorized.
 Delegates can share the flow checkout or use T3-managed worktrees. Ask for
 worktree isolation when you want a separate checkout. T3 creates and manages
 the worktrees; the parent integrates isolated changes into the flow branch
-before Terra runs checks and adversaries review.
+before Terra runs checks and adversaries review. When dependency-ready slices
+have specific, disjoint file scope and frozen interfaces, the lead may run
+their coders as a parallel wave, each in its own worktree. This is optional;
+sequential execution is the default and fallback, integration stays one slice
+at a time, and a slice whose actual changes overlap is demoted to sequential
+repair by its owning coder.
 
 See the [skill](skills/t3-autoflow/SKILL.md),
 [discovery rules](skills/t3-autoflow/references/discovery.md), and
@@ -71,12 +76,15 @@ not enforce Pi-style output schemas, command gates, or read-only reviewer tools.
 Permission prompts can still interrupt. Artifacts support manual reconciliation
 and resume, not automatic crash restart or exactly-once execution.
 
-The flow uses one writer per checkout, sequential implementation tasks, a coder-owned
-fix and review loop, and at most one merge-commit attempt. An ambiguous merge needs
+The flow uses one writer per checkout, sequential implementation by default
+with optional parallel waves in separate worktrees, a coder-owned fix and
+review loop, and at most one merge-commit attempt. An ambiguous merge needs
 reconciliation, never an automatic retry. Artifacts live outside the project under
 `~/.local/state/t3-autoflow/<flow-id>/`.
 
-Helper tests pass. A complete live plan-to-merge T3 flow remains unverified.
+Helper tests pass. A complete live plan-to-merge T3 flow remains unverified,
+including a parallel wave exercising concurrent coders, serial integration,
+and an overlap demotion.
 
 ## Test
 

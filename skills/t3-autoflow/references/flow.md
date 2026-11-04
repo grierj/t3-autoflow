@@ -20,10 +20,15 @@ The first architect inspects the repository and returns a `plan`. Divide the wor
 into modular coder assignments with file scope, dependencies, implementation
 steps and interfaces, testable success criteria, complexity, and a UI flag.
 Put implementation details in each task's `implementation` field and success
-criteria in `acceptance`. Express genuine unknowns in `questions`.
+criteria in `acceptance`. Express genuine unknowns in `questions`. Make each
+task's `files` specific enough that the lead can judge whether dependency-ready
+tasks overlap, and put any interface one task defines for another in the agreed
+implementation details, with a dependency where the consumer needs the result.
 
 When a second architect is available, have it inspect the repository and challenge
 all four parts: plan, slices, implementation details, and success criteria.
+Include shared files and unfrozen interfaces between dependency-independent
+tasks in that challenge; they bear on whether those tasks can run in parallel.
 It returns a `checker` verdict. Revise through the first architect and have the
 second architect check the revised plan until both agree. With one architect,
 proceed without a checker and record the availability limit. If the architects
@@ -35,13 +40,52 @@ approval request. Publication and merge still require the user's authorization.
 
 ## Implement and review
 
-Process slices in dependency order, with one writer per checkout:
+Process slices in dependency order, with one writer per checkout. Sequential
+execution is the default. The lead may instead group dependency-ready slices
+into a parallel wave when every slice in the wave meets all of these:
+
+- Its dependencies are already integrated and committed, and it starts its own
+  T3-managed worktree from the wave's common recorded flow revision.
+- Its planned `files`, including test files, are specific and disjoint from
+  every other slice in the wave. Scope too broad to establish disjointness,
+  such as an overlapping directory or glob, is ineligible.
+- It shares no hot files with the wave: lockfiles, manifests, schemas or
+  migrations, generated output, route or registry tables, barrel exports, or
+  shared fixtures and snapshots.
+- Any interface between wave slices is already frozen in the agreed plan. A
+  slice that must define an interface another wave slice consumes is a
+  dependency; run it first.
+
+Any doubt, or unavailable worktree isolation for a lead-chosen wave, means
+record the reason and run those slices sequentially. If the user requested
+isolation, its unavailability remains a blocker under the runtime contract.
+A prompt may request a wave or forbid one; a request does not waive the
+criteria above, and a prohibition means sequential execution.
+There is no fixed wave size; include only slices that meet the criteria.
+Record the wave, its common base revision, and each task ID before yielding.
+Each wave brief lists the slice's declared `files` as its write scope and
+instructs the coder to return `blocked` rather than edit outside that scope;
+the parent still verifies the actual diff at integration. A slice blocked
+solely by that write-scope limit exits the wave and proceeds sequentially
+under a normal brief, unless the needed scope change is material enough to
+require arbitration or an agreed plan revision first.
+
+Then, per slice:
 
 1. Assign a coder from the coder pool as the slice's owner. It implements the
    scope, including test code, and returns a `coder` result. It leaves changes
-   for inspection without committing or pushing. All test execution goes to
-   Terra, including targeted reproductions and checks proposed by other roles.
-2. Inspect the diff and integrate isolated changes into the flow branch. Terra
+   for inspection without committing or pushing. In a wave, launch each coder
+   in its own worktree without waiting for the others; completions wake the
+   parent under the runtime contract. All test execution goes to Terra,
+   including targeted reproductions and checks proposed by other roles.
+2. Inspect the diff and integrate isolated changes into the flow branch. The
+   parent integrates one slice at a time, as results return, and records the
+   integration order. Compare the actual changed files against the declared
+   `files`, against integrated slices, and against the declared files of
+   remaining wave slices. Overlap or an
+   integration conflict demotes the later slice to sequential: hold its
+   integration and return it to its owning coder to repair on the new
+   integrated base. Record the demotion; it is not a flow failure. Terra
    runs the applicable discovered checks using the check helper. Send failures
    and exact logs to the owning coder for diagnosis and repair.
 3. Adversaries inspect the same frozen candidate and return `review` results.
@@ -53,6 +97,8 @@ Process slices in dependency order, with one writer per checkout:
    coder. A fixer returns a `coder` result and its changes to the owning coder,
    who inspects, accepts or revises them, and remains responsible for the slice.
    A fixer cannot declare the slice complete or decide that the loop has stalled.
+   Fix rounds stay sequential within a slice, including for wave slices; a
+   slice entering its fix loop no longer counts as parallel with its own fixer.
 5. After the coder accepts the changes, Terra reruns affected checks. Adversaries
    re-review the resulting candidate with prior findings and fix evidence. Use
    fresh review tasks. Repeat until no fixes remain or the original coder reports
@@ -87,8 +133,9 @@ and the full final check set before publication.
 Inspect and commit only intended changes. For authorized publication, Terra
 fetches the base. If it moved, update the branch and send conflicts or
 implementation changes to a coder. Terra reruns checks and adversaries re-review
-changed code before the final architect review. Freeze writers and verify that
-all evidence matches the exact candidate.
+changed code before the final architect review. Freeze all writers in every
+checkout and verify that all evidence matches the exact candidate. No wave
+remains active from this point through publication.
 
 Delegate a fresh, read-only review to the first planning architect using its
 recorded target. Supply the accepted plan and any agreed revisions, every task's

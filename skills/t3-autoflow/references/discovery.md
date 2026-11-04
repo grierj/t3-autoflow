@@ -71,9 +71,11 @@ implement the work; this is helpful, not required. Select reviewers from the
 adversary pool as the work warrants, without requiring a fixed count or separate
 specialist gates. Record any overlap with writers.
 
-Keep the original coder's identity and task context across fix rounds. A fresh
-child can continue that ownership using the same selected target and the full
-history of findings and attempts. Fixers do not replace the owning coder.
+Keep each slice's original coder identity and task context across fix rounds,
+including when slices run in a parallel wave and when a wave slice is demoted
+to sequential repair. A fresh child can continue that ownership using the same
+selected target and the full history of findings and attempts. Fixers do not
+replace the owning coder.
 
 Record provider, model, options, and role before launch. Keep selections stable
 across retries and re-reviews. If a needed role has no available target, report
