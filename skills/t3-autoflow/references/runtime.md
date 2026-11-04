@@ -51,11 +51,15 @@ unless the user explicitly selected one; inherit permissions.
 ### Checkout isolation
 
 Use `isolation: "shared"` for work in the flow checkout, or `isolation: "worktree"`
-when the user requests isolation or the task benefits from a separate checkout.
-Let T3 create and manage the worktree through the delegation tool. Never run
-shell worktree setup or put checkout creation instructions in a child's brief.
-If the requested isolation is unavailable, report the blocker instead of silently
-switching to shared execution.
+when the user requests isolation, the task benefits from a separate checkout,
+or the slice runs in a parallel wave. Parallel writers always use separate
+worktrees; never run them in a shared checkout. Let T3 create and manage the
+worktree through the delegation tool. Never run shell worktree setup or put
+checkout creation instructions in a child's brief. If user-requested isolation
+is unavailable, report the blocker instead of silently switching to shared
+execution. If the lead chose a worktree only to enable a wave and it is
+unavailable, record that and run the slices sequentially under the otherwise
+applicable isolation instead of running them in parallel in a shared checkout.
 
 Record the checkout and branch returned by T3. An isolated child works in its
 assigned checkout, not the parent's path. Verify its starting revision matches
@@ -66,18 +70,23 @@ required starting content, stop and reconcile before proceeding.
 
 After an isolated coder or fixer finishes, inspect its actual checkout and diff.
 The parent commits only intended changes and integrates them into the flow
-branch, for example by cherry-picking. Route conflicts to the owning coder.
-Record source and integrated revisions. A fixer change still returns to its
-owning coder for acceptance before Terra checks and adversary review in the flow
-checkout.
+branch, for example by cherry-picking, one slice at a time even when several
+wave results are ready. Route conflicts to the owning coder of the slice being
+integrated; a wave slice demoted by overlap is repaired by its owning coder on
+the new integrated base, sequentially. Record source and integrated revisions
+and the integration order. A fixer change still returns to its owning coder
+for acceptance before Terra checks and adversary review in the flow checkout.
 An isolated child's result alone does not establish that integration succeeded.
 
 Reviews of uncommitted flow changes use shared isolation. An isolated reviewer
 must inspect the exact committed candidate revision, including the same diff
 base. Confirm that revision before accepting its verdict. Keep the existing
-dependency order and writer freeze during checks and reviews; worktree support
-does not introduce parallel implementation. Preserve worktrees with outstanding
-changes for recovery and leave lifecycle management to T3.
+dependency order. During checks and reviews, freeze writers in the checkout
+being checked or reviewed; writers in other worktrees do not invalidate that
+evidence, provided the parent verifies the candidate checkout before and after.
+Worktree support allows parallel implementation only for wave slices that meet
+the flow procedure's criteria. Preserve worktrees with outstanding changes for
+recovery and leave lifecycle management to T3.
 
 T3's tool role is separate from the autoflow model role. Map architect to
 `design`, coders and fixers to `implementation`, Terra checks to `test`, the second
@@ -90,9 +99,13 @@ not to delegate further or contact humans. Read-only roles must not write result
 files; return JSON and let the parent save it. Only Terra operations children
 may publish or merge, within their explicit brief.
 
-`mode: "wait"` can obtain a result in the current turn. For async or a timed-out
-wait, obey `next`: persist state, end the turn, and let completion wake the parent.
-Do not poll, sleep, create watchers, or use `t3_thread_send` to re-run reviews.
+`mode: "wait"` can obtain a result in the current turn. For a parallel wave,
+launch each coder without waiting for the others to finish, record each
+returned task ID as it is launched, and persist the full wave state before
+yielding. Completion of one wave task does not complete the wave. For async or
+a timed-out wait, obey `next`: persist state, end the turn, and let completion
+wake the parent. Do not poll, sleep, create watchers, or use `t3_thread_send`
+to re-run reviews.
 On completion, use the delivered result or read the completed task with
 `task_status`; use `t3_thread_read` if the complete child response is needed.
 A completed turn with live descendants is not a completed task.
@@ -115,8 +128,10 @@ architect arbitration. Permission prompts remain under the host's control.
 Terra runs exact discovered project checks with `scripts/run-check.py`. The helper
 executes one command in the foreground and records exit status, argv, cwd, HEAD,
 and output path. It has no process registry, retry loop, or wakeup mechanism.
-Freeze writers and verify tracked/untracked checkout changes before and after
-checks and reviews. Any unexpected change invalidates their results.
+Freeze writers in the checkout being checked or reviewed and verify its
+tracked/untracked changes before and after. Any unexpected change there
+invalidates their results. Final checks and publication freeze every writer,
+as the flow procedure requires.
 
 Terra uses Git/`gh` or available GitHub tools for all GitHub interactions.
 Immediately after creating or pushing to a PR, call `link_pull_request` with the full URL as the next tool

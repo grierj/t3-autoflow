@@ -18,8 +18,12 @@ Use [validation](references/validation.md) for handoff and check helpers.
   PR publication, and merge. Invoking this skill alone does not authorize all three.
   Settle missing scope during planning, before autonomous execution.
 - One flow and one code writer per checkout. Delegates may share the flow checkout
-  or use T3-managed worktree isolation. T3 owns worktree creation and lifecycle;
-  follow the isolation and integration rules in the runtime contract.
+  or use T3-managed worktree isolation. Multiple writers in one flow are allowed
+  only as an optional wave of slices, each in its own T3-managed worktree, when
+  the lead judges them independent under the flow procedure. Sequential execution
+  is the default and fallback; never run parallel writers in a shared checkout.
+  T3 owns worktree creation and lifecycle; follow the isolation and integration
+  rules in the runtime contract.
 - Discover available providers and models through T3 and select them by role.
   Honor prompt overrides; record the choices. No silent substitution or CLI relay.
 - Architects plan modular slices; use two agreeing architects when available.
@@ -55,7 +59,8 @@ Store artifacts outside the checkout, for example under
 `~/.local/state/t3-autoflow/<flow-id>/`. The parent writes flow state and saved
 role results. Terra may write command evidence to paths assigned in its brief.
 Persist the flow checkout path, each delegate's isolation and returned checkout/branch,
-integration revisions, parent thread ID/link, branch/base, authorized actions,
+wave groupings with their common base revision and integration order, demoted
+slices, integration revisions, parent thread ID/link, branch/base, authorized actions,
 selected models, original coder ownership, findings and fix attempts, discovered
 checks and their sources, accepted plan, final architect review and its candidate
 revision, current phase/task, child task IDs and
@@ -70,15 +75,17 @@ same revision and checkout content that will be published.
 ## Status, stop, and resume
 
 - **Status:** read the flow artifacts and the parent thread via `t3_thread_read`.
-  Report phase, last verified revision, active task links, and blockers. Do not
-  poll a running child using `task_status`.
-- **Stop:** cancel recorded outstanding tasks with `task_cancel`; remove the
-  parent's PR watch with `unwatch_pull_request`. Mark the flow stopped and leave
-  branch, PR, and evidence intact. Do not claim cancellation is complete merely
-  because it was requested. Do not start another writer until T3 confirms it.
+  Report phase, last verified revision, active task links, per-slice wave stage,
+  and blockers. Do not poll a running child using `task_status`.
+- **Stop:** cancel every recorded outstanding task with `task_cancel`, including
+  all wave writers; remove the parent's PR watch with `unwatch_pull_request`.
+  Mark the flow stopped and leave branch, PR, worktrees, and evidence intact.
+  Do not claim cancellation is complete merely because it was requested. Do not
+  start another writer in an affected checkout until T3 confirms its writer ended.
 - **Resume:** read the recorded parent thread before interpreting its state.
-  Reconcile artifacts against branch, checkout, T3 activity, and PR state. Refuse
-  an active writer, unknown changes, a different checkout, or an ambiguous merge.
+  Reconcile artifacts against branch, every recorded checkout and revision, T3
+  activity, and PR state. Refuse any active writer, unknown changes in any
+  recorded checkout, a different checkout, or an ambiguous merge.
   Recheck model availability and project test instructions; rerun stale checks. Reuse validated artifacts,
   but create fresh children for new work. Resume in the original parent where
   possible; cross-thread resume requires confirming that the old owner is inactive.

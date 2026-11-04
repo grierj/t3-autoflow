@@ -40,8 +40,8 @@ The workflow lead records a discovered command as an internal check artifact wit
 user-maintained setup. Choose a timeout from project guidance or expected runtime
 and record it; do not ask the user to create a file. For example, if the project
 instructs `npm test`, record `{"id":"unit","argv":["npm","test"],"timeoutMs":120000}`.
-Preserve the project's actual command, working directory, and environment. Freeze writers,
-then have Terra run:
+Preserve the project's actual command, working directory, and environment. Freeze
+writers in the checkout being checked, then have Terra run:
 
 ```sh
 python3 <skill-dir>/scripts/run-check.py <check.json> <repo> <new-log> <new-evidence.json>
