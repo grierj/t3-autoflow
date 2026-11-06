@@ -29,11 +29,10 @@ When a secondary architect is available, the architects exchange the plan
 directly until one accepts the other's version:
 
 1. The primary architect's validated plan goes to the secondary architect.
-2. The secondary architect inspects the repository and reviews all four parts:
-   plan, slices, implementation details, and success criteria, including shared
-   files and unfrozen interfaces between dependency-independent tasks, since they
-   bear on whether those tasks can run in parallel. It returns a `checker`
-   result. On `agree`, the plan goes to the workflow lead to run.
+2. The secondary architect inspects the repository and reviews the plan,
+   slices, implementation details, and success criteria against the review
+   checklist below. It returns a `checker` result. On `agree`, the plan goes to
+   the workflow lead to run.
 3. On `revised`, the secondary architect has rewritten the plan itself, with
    `objections` explaining each change. The revised plan goes to the primary
    architect.
@@ -42,13 +41,60 @@ directly until one accepts the other's version:
 5. On `revised`, the primary architect's rewritten plan goes back to the secondary
    architect, and the exchange returns to step 2.
 
+The primary architect drafts against this checklist, and each reviewing
+architect checks it:
+
+- **Goal coverage** (`goal`): together, the tasks deliver the whole goal and
+  every user answer recorded so far.
+- **Scope** (`scope`): nothing exceeds the requested scope or the authorized
+  actions.
+- **Testable criteria** (`criteria`): each `acceptance` entry is specific and
+  observable enough to verify with a check or by inspecting code.
+- **Verification** (`verification`): the plan uses the discovered project
+  checks, includes regression tests for changed behavior, and states any
+  verification limit explicitly.
+- **Slice boundaries** (`slices`): each task is a coherent unit for one coder,
+  with `files` specific enough to judge overlap.
+- **Dependencies and interfaces** (`dependencies`): tasks are ordered correctly,
+  and each interface one task defines for another is written into its
+  implementation details with a dependency.
+- **Shared files and parallel safety** (`parallel`): shared files and unfrozen
+  interfaces between dependency-independent tasks are identified, since they
+  decide whether those tasks can run in parallel.
+- **Repository fit** (`repository`): the implementation follows the repository's
+  instructions, existing patterns, and conventions.
+- **Unknowns** (`unknowns`): open questions are stated in `questions` instead of
+  resolved by guessing.
+- **Other** (`other`): any other concrete defect. Its `issue` explains why no
+  listed item covers it. These objections show where the checklist should grow,
+  so do not force-fit one into the nearest item.
+
+Revise only for a concrete defect. Each objection names its checklist `item`,
+states the `issue`, and gives both:
+
+- **`source`:** where the defect is shown, outside the reviewer's opinion: a
+  repository file and line, a discovered check or its source, the user's request
+  or a recorded answer, a repository instruction, or conflicting plan elements
+  named by task ID and field, such as a consumer of an interface no task defines.
+- **`failure`:** what would concretely go wrong if the plan ran as written.
+
+Architects do not run checks during planning; any test they want goes to Terra.
+An observation that is only a preference, such as naming, phrasing, or a
+different but equally valid split, is not grounds for revision. Record it in
+`dropped` with the reason it was not acted on. Agreement can carry `dropped`
+entries but no objections. Append each response's objections and `dropped`
+entries to the ledger, so the flow shows whether the rule is catching defects
+or suppressing them. The receiving architect judges whether each objection's
+source and failure hold when it reviews the revision.
+
 The parent carries each plan between the architects verbatim. It does not edit,
 summarize, merge, or add objections of its own. Save every plan version. Validate
 each response with `validate.py result checker <response> <reviewed-plan>`, which
 requires an `agree` to return the reviewed plan unchanged and a `revised` plan to
 differ from it. The accepted plan is the version the agreeing architect received.
 Each brief includes the plan under review, the full revision history with
-objections, and any recorded user answers. A reviewing architect cannot agree
+objections and `dropped` entries, recorded user answers, the discovered project checks and their
+sources, and the authorized scope and actions. A reviewing architect cannot agree
 while its plan has open questions; it resolves them by revising.
 
 With one architect, proceed with its plan and record the availability limit.

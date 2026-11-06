@@ -61,11 +61,24 @@ class Validation(unittest.TestCase):
                     dependencies=[], ui=False)
         plan = dict(goal='Example', tasks=[task], questions=[])
         revised = dict(plan, tasks=[dict(task, acceptance=['Output matches expected', 'Errors exit 2'])])
-        agree = dict(verdict='agree', objections=[], plan=plan)
-        revision = dict(verdict='revised', objections=['Error handling untested'], plan=revised)
+        objection = dict(item='criteria', issue='Error handling has no acceptance criterion',
+                         source='User request: invalid input exits with status 2',
+                         failure='A parser that exits 0 on bad input would pass review')
+        dropped = dict(item='slices', observation='Could split parsing from output',
+                       reason='Preference; the current split is equally valid')
+        agree = dict(verdict='agree', objections=[], dropped=[dropped], plan=plan)
+        revision = dict(verdict='revised', objections=[objection], dropped=[], plan=revised)
         v.result('checker', agree, plan)
         v.result('checker', revision, plan)
-        for value, reviewed in [(dict(agree, objections=['missing task']), None),
+        v.result('checker', dict(revision, objections=[dict(objection, item='other')]), plan)
+        for value, reviewed in [(dict(agree, objections=[objection]), None),
+                                (dict(revision, objections=['Error handling untested']), None),
+                                (dict(revision, objections=[dict(objection, item='style')]), None),
+                                (dict(revision, objections=[dict(objection, source=' ')]), None),
+                                (dict(revision, objections=[dict(objection, failure='')]), None),
+                                (dict(revision, objections=[{k: objection[k] for k in ('item', 'issue', 'source')}]), None),
+                                (dict(agree, dropped=[dict(dropped, reason='')]), None),
+                                ({k: agree[k] for k in ('verdict', 'objections', 'plan')}, None),
                                 (dict(agree, plan=dict(plan, questions=['Which format?'])), None),
                                 (dict(revision, objections=[]), None),
                                 (dict(revision, verdict='changes'), None),
