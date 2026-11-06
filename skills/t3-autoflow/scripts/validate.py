@@ -26,9 +26,14 @@ TASK = obj(dict(id=TEXT, title=TEXT, complexity=COMPLEXITY, files=array(TEXT, 1)
 FINDING = obj(dict(id=TEXT, severity=enum('P0', 'P1', 'P2'), summary=TEXT,
                    evidence=TEXT, fix=TEXT, complexity=COMPLEXITY))
 PLAN = obj(dict(goal=TEXT, tasks=array(TASK, 1), questions=TEXTS))
+CHECKLIST = enum('goal', 'scope', 'criteria', 'verification', 'slices', 'dependencies',
+                 'parallel', 'repository', 'unknowns', 'other')
+OBJECTION = obj(dict(item=CHECKLIST, issue=TEXT, source=TEXT, failure=TEXT))
+DROPPED = obj(dict(item=CHECKLIST, observation=TEXT, reason=TEXT))
 SCHEMAS = {
     'plan': PLAN,
-    'checker': obj(dict(verdict=enum('agree', 'revised'), objections=TEXTS, plan=PLAN)),
+    'checker': obj(dict(verdict=enum('agree', 'revised'), objections=array(OBJECTION),
+                        dropped=array(DROPPED), plan=PLAN)),
     'coder': obj(dict(status=enum('done', 'blocked', 'stalled', 'arbitrate'), summary=TEXT, changedFiles=TEXTS,
                       deviations=TEXTS, judgementCalls=TEXTS)),
     'review': obj(dict(verdict=enum('pass', 'findings', 'blocked'), summary=TEXT, findings=array(FINDING))),

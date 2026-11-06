@@ -12,7 +12,9 @@ override those choices. There are no setup files or fixed provider/model IDs to 
 - GPT Astra, Claude Opus, and Muse Wonder Full are the architect pool. When two
   are available, the primary architect drafts the plan and the secondary reviews
   it. Each either accepts the other's plan, sending it to the workflow lead, or
-  revises it and hands it back, until one accepts it unchanged.
+  revises it and hands it back, until one accepts it unchanged. Each revision
+  names a concrete defect, cites where it is shown and what would fail, and
+  logs dropped preferences.
 - Claude Sonnet and GPT Sol own code implementation.
 - Sonnet, Sol, Muse Spark, and Grok 4.7 review as adversaries. Prefer a reviewer
   who did not implement the work, without requiring it.

@@ -95,7 +95,8 @@ to `review`, and architect arbitration or workflow coordination to `general`. Se
 
 The brief must contain the repository path, branch, read/write scope, goal,
 acceptance criteria, relevant plan and evidence, output contract, and instructions
-not to delegate further or contact humans. Read-only roles must not write result
+not to delegate further or contact humans. Planning and plan-review briefs also
+carry the discovered project checks and the authorized scope and actions. Read-only roles must not write result
 files; return JSON and let the parent save it. Only Terra operations children
 may publish or merge, within their explicit brief.
 
