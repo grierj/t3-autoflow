@@ -16,7 +16,7 @@
 
 ## Plan with architects
 
-The first architect inspects the repository and returns a `plan`. Divide the work
+The primary architect inspects the repository and returns a `plan`. Divide the work
 into modular coder assignments with file scope, dependencies, implementation
 steps and interfaces, testable success criteria, complexity, and a UI flag.
 Put implementation details in each task's `implementation` field and success
@@ -25,18 +25,42 @@ task's `files` specific enough that the lead can judge whether dependency-ready
 tasks overlap, and put any interface one task defines for another in the agreed
 implementation details, with a dependency where the consumer needs the result.
 
-When a second architect is available, have it inspect the repository and challenge
-all four parts: plan, slices, implementation details, and success criteria.
-Include shared files and unfrozen interfaces between dependency-independent
-tasks in that challenge; they bear on whether those tasks can run in parallel.
-It returns a `checker` verdict. Revise through the first architect and have the
-second architect check the revised plan until both agree. With one architect,
-proceed without a checker and record the availability limit. If the architects
-cannot resolve a disagreement, surface it rather than pretending they agreed.
+When a secondary architect is available, the architects exchange the plan
+directly until one accepts the other's version:
 
-Relay planning questions to the user and record answers. Once the architects
-agree and questions are resolved, freeze the plan and begin without a redundant
-approval request. Publication and merge still require the user's authorization.
+1. The primary architect's validated plan goes to the secondary architect.
+2. The secondary architect inspects the repository and reviews all four parts:
+   plan, slices, implementation details, and success criteria, including shared
+   files and unfrozen interfaces between dependency-independent tasks, since they
+   bear on whether those tasks can run in parallel. It returns a `checker`
+   result. On `agree`, the plan goes to the workflow lead to run.
+3. On `revised`, the secondary architect has rewritten the plan itself, with
+   `objections` explaining each change. The revised plan goes to the primary
+   architect.
+4. The primary architect reviews the revision the same way. On `agree`, the plan
+   goes to the workflow lead to run.
+5. On `revised`, the primary architect's rewritten plan goes back to the secondary
+   architect, and the exchange returns to step 2.
+
+The parent carries each plan between the architects verbatim. It does not edit,
+summarize, merge, or add objections of its own. Save every plan version. Validate
+each response with `validate.py result checker <response> <reviewed-plan>`, which
+requires an `agree` to return the reviewed plan unchanged and a `revised` plan to
+differ from it. The accepted plan is the version the agreeing architect received.
+Each brief includes the plan under review, the full revision history with
+objections, and any recorded user answers. A reviewing architect cannot agree
+while its plan has open questions; it resolves them by revising.
+
+With one architect, proceed with its plan and record the availability limit.
+If a revision restores a plan version that an architect already rejected, the
+architects are not converging: surface both positions and their objections to
+the user rather than pretending they agreed.
+
+Relay planning questions from any plan version to the user and record answers.
+Send the answers with that plan to the next architect in the exchange. Once an
+architect agrees and questions are resolved, freeze the plan and begin without
+a redundant approval request. Publication and merge still require the user's
+authorization.
 
 ## Implement and review
 
@@ -112,8 +136,9 @@ arbitration after a failure count.
 
 The owning coder can return `arbitrate` to request an architect's judgment. The
 architect returns an `arbitrator` result based on the plan, evidence, and attempts.
-If the architect recommends changed slices or implementation details, obtain a
-new validated `plan` and the second architect's agreement when available.
+If the architect recommends changed slices or implementation details, have the
+primary architect produce a new validated `plan` and run it through the same
+architect exchange when a secondary architect is available.
 Reconcile completed work and task IDs before replacing the remaining queue.
 Return the decision to the owning coder, then continue through Terra checks and
 adversary review. Arbitration cannot turn failed verification into a pass.
@@ -137,7 +162,7 @@ changed code before the final architect review. Freeze all writers in every
 checkout and verify that all evidence matches the exact candidate. No wave
 remains active from this point through publication.
 
-Delegate a fresh, read-only review to the first planning architect using its
+Delegate a fresh, read-only review to the primary architect using its
 recorded target. Supply the accepted plan and any agreed revisions, every task's
 `acceptance` criteria, the candidate SHA and diff base, the full integrated diff,
 resolved findings, and Terra's final check evidence. The architect inspects the
@@ -158,7 +183,7 @@ Send findings to the owning coder through the existing fix, Terra check, and
 adversary review cycle. Then repeat final checks and request a fresh architect
 review with prior findings and fix evidence. Preserve the existing stalled and
 blocked termination rules. Do not weaken success criteria to obtain a pass;
-plan revisions require the architect agreement described above.
+plan revisions require the architect exchange described above.
 
 For local-only scope, finish with the architect-approved branch and report it.
 For publication, require the architect's validated `pass` on the exact candidate

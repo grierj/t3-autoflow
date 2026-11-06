@@ -49,13 +49,39 @@ class Validation(unittest.TestCase):
                                deviations=[], judgementCalls=[]))
         v.result('arbitrator', dict(verdict='terminate', evidence='Repeated failure',
                                     action='Install dependency'))
-        with self.assertRaises(ValueError):
-            v.result('checker', dict(verdict='agree', objections=['missing task'], questions=[]))
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / 'result.json'
             path.write_text('{"verdict":"pass","verdict":"blocked"}')
             with self.assertRaises(ValueError):
                 v.read(path)
+
+    def test_architect_plan_exchange(self):
+        task = dict(id='one', title='Implement', complexity='low', files=['x'],
+                    implementation=['Add the parser'], acceptance=['Output matches expected'],
+                    dependencies=[], ui=False)
+        plan = dict(goal='Example', tasks=[task], questions=[])
+        revised = dict(plan, tasks=[dict(task, acceptance=['Output matches expected', 'Errors exit 2'])])
+        agree = dict(verdict='agree', objections=[], plan=plan)
+        revision = dict(verdict='revised', objections=['Error handling untested'], plan=revised)
+        v.result('checker', agree, plan)
+        v.result('checker', revision, plan)
+        for value, reviewed in [(dict(agree, objections=['missing task']), None),
+                                (dict(agree, plan=dict(plan, questions=['Which format?'])), None),
+                                (dict(revision, objections=[]), None),
+                                (dict(revision, verdict='changes'), None),
+                                (dict(agree, plan=dict(plan, tasks=[task, task])), None),
+                                (dict(agree, plan=revised), plan),
+                                (dict(revision, plan=plan), plan)]:
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                v.result('checker', value, reviewed)
+        with tempfile.TemporaryDirectory() as directory:
+            result, reviewed = Path(directory) / 'checker.json', Path(directory) / 'plan.json'
+            result.write_text(json.dumps(agree))
+            reviewed.write_text(json.dumps(revised))
+            with self.assertRaises(ValueError):
+                v.main(['result', 'checker', str(result), str(reviewed)])
+            reviewed.write_text(json.dumps(plan))
+            self.assertEqual(v.main(['result', 'checker', str(result), str(reviewed)]), agree)
 
     def test_coder_loop_decisions(self):
         for status in ['done', 'blocked', 'stalled', 'arbitrate']:

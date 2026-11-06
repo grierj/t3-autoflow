@@ -64,9 +64,10 @@ require the catalog's maximum reasoning effort setting. Do not invent an option
 or silently lower that effort. The workflow-equivalent allowance does not by
 itself authorize replacing Terra for tests and GitHub.
 
-Use two distinct architects when available. Both must agree on the plan, slices,
-implementation details, and success criteria. With only one available architect,
-record that limitation and proceed with its plan. Prefer adversaries who did not
+Use two distinct architects when available: a primary and a secondary. They
+revise each other's plan, slices, implementation details, and success criteria
+until one accepts the other's version unchanged. With only one available
+architect, record that limitation and proceed with its plan. Prefer adversaries who did not
 implement the work; this is helpful, not required. Select reviewers from the
 adversary pool as the work warrants, without requiring a fixed count or separate
 specialist gates. Record any overlap with writers.

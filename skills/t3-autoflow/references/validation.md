@@ -9,12 +9,17 @@ Print the authoritative JSON Schema contracts for child briefs:
 ```sh
 python3 <skill-dir>/scripts/validate.py schemas
 python3 <skill-dir>/scripts/validate.py result review <response.json>
+python3 <skill-dir>/scripts/validate.py result checker <response.json> <reviewed-plan.json>
 ```
 
 Kinds are `plan`, `checker`, `coder`, `review`, and `arbitrator`. Every field in a
 contract is required; extra fields fail. A plan task's `implementation` array
-contains its implementation steps and interface decisions. The second architect
-uses `checker` to agree on the whole plan or return objections. Fixers use the
+contains its implementation steps and interface decisions. The reviewing architect in
+the plan exchange uses `checker`: `agree` returns the reviewed plan unchanged with
+no objections or open questions, and `revised` returns a complete rewritten plan
+with objections explaining the changes. The embedded plan follows the `plan`
+rules. Pass the reviewed plan file to check that agreement did not alter it and
+that a revision actually changed it. Fixers use the
 `coder` contract, returning `done` or `blocked`. Only the owning coder uses
 `stalled` to stop for lack of progress or `arbitrate` to request architect judgment.
 An architect uses `arbitrator` to recommend continuing, revising the plan, or

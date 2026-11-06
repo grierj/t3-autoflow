@@ -88,10 +88,10 @@ Worktree support allows parallel implementation only for wave slices that meet
 the flow procedure's criteria. Preserve worktrees with outstanding changes for
 recovery and leave lifecycle management to T3.
 
-T3's tool role is separate from the autoflow model role. Map architect to
-`design`, coders and fixers to `implementation`, Terra checks to `test`, the second
-architect, final architect review, and adversaries to `review`, and architect arbitration or workflow
-coordination to `general`. Select a supported role for Terra GitHub operations.
+T3's tool role is separate from the autoflow model role. Map architect planning
+and plan exchange, which can return a revised plan, to `design`, coders and fixers
+to `implementation`, Terra checks to `test`, the final architect review and adversaries
+to `review`, and architect arbitration or workflow coordination to `general`. Select a supported role for Terra GitHub operations.
 
 The brief must contain the repository path, branch, read/write scope, goal,
 acceptance criteria, relevant plan and evidence, output contract, and instructions
