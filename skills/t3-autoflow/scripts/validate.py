@@ -25,9 +25,10 @@ TASK = obj(dict(id=TEXT, title=TEXT, complexity=COMPLEXITY, files=array(TEXT, 1)
                 dependencies=TEXTS, ui=dict(type='boolean')))
 FINDING = obj(dict(id=TEXT, severity=enum('P0', 'P1', 'P2'), summary=TEXT,
                    evidence=TEXT, fix=TEXT, complexity=COMPLEXITY))
+PLAN = obj(dict(goal=TEXT, tasks=array(TASK, 1), questions=TEXTS))
 SCHEMAS = {
-    'plan': obj(dict(goal=TEXT, tasks=array(TASK, 1), questions=TEXTS)),
-    'checker': obj(dict(verdict=enum('agree', 'changes', 'questions'), objections=TEXTS, questions=TEXTS)),
+    'plan': PLAN,
+    'checker': obj(dict(verdict=enum('agree', 'revised'), objections=TEXTS, plan=PLAN)),
     'coder': obj(dict(status=enum('done', 'blocked', 'stalled', 'arbitrate'), summary=TEXT, changedFiles=TEXTS,
                       deviations=TEXTS, judgementCalls=TEXTS)),
     'review': obj(dict(verdict=enum('pass', 'findings', 'blocked'), summary=TEXT, findings=array(FINDING))),
@@ -60,19 +61,28 @@ def validate(schema, value, path='$'):
             validate(schema['properties'][key], item, f'{path}.{key}')
 
 
-def result(kind, value):
+def plan_order(plan):
+    seen = set()
+    for task in plan['tasks']:
+        require(task['id'] not in seen, 'duplicate task ID')
+        require(set(task['dependencies']) <= seen, 'dependencies must precede task')
+        seen.add(task['id'])
+
+
+def result(kind, value, reviewed=None):
     validate(SCHEMAS[kind], value)
     if kind == 'plan':
-        seen = set()
-        for task in value['tasks']:
-            require(task['id'] not in seen, 'duplicate task ID')
-            require(set(task['dependencies']) <= seen, 'dependencies must precede task')
-            seen.add(task['id'])
+        plan_order(value)
     elif kind == 'checker':
-        verdict = value['verdict']
-        require(verdict != 'agree' or not (value['questions'] or value['objections']), 'agreement has unresolved items')
-        require(verdict != 'changes' or bool(value['objections']), 'changes needs objections')
-        require(verdict != 'questions' or bool(value['questions']), 'questions needs questions')
+        plan_order(value['plan'])
+        agree = value['verdict'] == 'agree'
+        require(not agree or not (value['objections'] or value['plan']['questions']),
+                'agreement has unresolved items')
+        require(agree or bool(value['objections']), 'revision needs objections')
+        if reviewed is not None:
+            result('plan', reviewed)
+            require(agree == (value['plan'] == reviewed),
+                    'agreement must return the reviewed plan unchanged; a revision must change it')
     elif kind == 'review':
         require((value['verdict'] == 'findings') == bool(value['findings']), 'verdict contradicts findings')
         ids = [f['id'] for f in value['findings']]
@@ -110,7 +120,9 @@ def main(args):
         return SCHEMAS
     if len(args) == 3 and args[0] == 'result' and args[1] in SCHEMAS:
         return result(args[1], read(args[2]))
-    raise ValueError('usage: validate.py schemas | result KIND FILE')
+    if len(args) == 4 and args[:2] == ['result', 'checker']:
+        return result('checker', read(args[2]), read(args[3]))
+    raise ValueError('usage: validate.py schemas | result KIND FILE | result checker FILE REVIEWED_PLAN')
 
 
 if __name__ == '__main__':

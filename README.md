@@ -9,9 +9,10 @@ from T3's live provider/model catalog according to each role. Your prompt can
 override those choices. There are no setup files or fixed provider/model IDs to maintain.
 
 - GPT 6.1 Terra or equivalent leads the workflow.
-- GPT Astra, Claude Opus, and Muse Wonder Full are the architect pool. Use two
-  when available and agree on the plan, modular slices, implementation details,
-  and success criteria.
+- GPT Astra, Claude Opus, and Muse Wonder Full are the architect pool. When two
+  are available, the primary architect drafts the plan and the secondary reviews
+  it. Each either accepts the other's plan, sending it to the workflow lead, or
+  revises it and hands it back, until one accepts it unchanged.
 - Claude Sonnet and GPT Sol own code implementation.
 - Sonnet, Sol, Muse Spark, and Grok 4.7 review as adversaries. Prefer a reviewer
   who did not implement the work, without requiring it.
@@ -22,7 +23,7 @@ override those choices. There are no setup files or fixed provider/model IDs to 
 
 Repeat fixes and adversary review until no fixes remain or the original coder
 reports no progress. The coder can ask an architect to arbitrate. Larger changes
-stay with coders. After final checks, the first planning architect reviews the
+stay with coders. After final checks, the primary architect reviews the
 integrated code against every success criterion before PR publication or local
 handoff. Gaps return to the same fix loop. Changes to the candidate require a
 fresh architect review, including fixes made after the PR opens.

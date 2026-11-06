@@ -26,12 +26,13 @@ Use [validation](references/validation.md) for handoff and check helpers.
   rules in the runtime contract.
 - Discover available providers and models through T3 and select them by role.
   Honor prompt overrides; record the choices. No silent substitution or CLI relay.
-- Architects plan modular slices; use two agreeing architects when available.
+- Architects plan modular slices. When two are available, the primary and
+  secondary architects revise each other's plan until one accepts it unchanged.
   Coders own implementation, fixers return small fixes to the owning coder, and
   adversaries re-review until no fixes remain or the original coder stops for
   lack of progress. Coders can request architect arbitration. Use the role
   preferences in discovery and the briefs in the flow reference.
-- Before publication or local handoff, the first planning architect reviews the
+- Before publication or local handoff, the primary architect reviews the
   integrated code against every success criterion. Require a validated `review`
   pass on the exact candidate; changes invalidate it. See the final review in
   the flow reference.
