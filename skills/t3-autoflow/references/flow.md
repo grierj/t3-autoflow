@@ -51,7 +51,8 @@ models or unsupported options rather than substituting. Show the revised table
 and ask again until the user confirms it. Record the confirmed targets, the PR
 and merge answers, and the confirmation in flow state and `ledger.jsonl`. A
 confirmed PR does not authorize merge. Later scope changes need an explicit user
-instruction.
+instruction; record each one in flow state and the ledger. The latest recorded
+scope governs publication and merge.
 
 ## Plan with architects
 
@@ -144,8 +145,8 @@ the user rather than pretending they agreed.
 Relay planning questions from any plan version to the user and record answers.
 Send the answers with that plan to the next architect in the exchange. Once an
 architect agrees and questions are resolved, freeze the plan and begin without
-a redundant approval request. Publication and merge follow the scope confirmed
-in preflight.
+a redundant approval request. Publication and merge follow the latest recorded
+scope.
 
 ## Implement and review
 
@@ -297,8 +298,10 @@ final architect review, and Terra push. Link again and wait through T3 as needed
 means no CI suite was reported, not that a suite ran successfully. Query failures
 are blockers. Branch protection and required reviews still apply.
 
-Terra merges only when the user confirmed merge in preflight, every merge
-requirement listed there holds on the current head, and GitHub reports readiness.
+Terra merges only when the latest recorded scope authorizes merge, through the
+preflight confirmation or a later explicit user instruction, every merge
+requirement listed in preflight holds on the current head, and GitHub reports
+readiness.
 Record `mergeAttempted: true` before one merge-commit attempt. Never bypass
 protection or retry an ambiguous merge. Inspect PR state to establish the outcome.
 Without merge authorization, finish with the open, linked PR and report it.

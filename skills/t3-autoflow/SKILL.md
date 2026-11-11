@@ -19,6 +19,7 @@ Use [validation](references/validation.md) for handoff and check helpers.
   should result in a PR and, if so, whether to merge it after all requirements
   pass. Wait for answers. See the confirmation step in the flow reference.
 - Preserve the confirmed scope: local work only, PR publication, or PR and merge.
+  Only an explicit later user instruction changes it; record each change.
   Invoking this skill alone does not authorize publication or merge.
 - One flow and one code writer per checkout. Delegates may share the flow checkout
   or use T3-managed worktree isolation. Multiple writers in one flow are allowed
@@ -91,7 +92,7 @@ same revision and checkout content that will be published.
   activity, and PR state. Refuse any active writer, unknown changes in any
   recorded checkout, a different checkout, or an ambiguous merge.
   Recheck model availability and project test instructions; rerun stale checks.
-  Reuse confirmed scope. If a confirmed model is unavailable, show the revised
+  Reuse the latest recorded scope. If a confirmed model is unavailable, show the revised
   table and confirm it with the user before delegating. Reuse validated artifacts,
   but create fresh children for new work. Resume in the original parent where
   possible; cross-thread resume requires confirming that the old owner is inactive.

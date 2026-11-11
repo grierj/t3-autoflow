@@ -61,7 +61,7 @@ The skill reads repository instructions, manifests, CI, and test scripts to choo
 checks. It always asks you to confirm the models, the PR, and the merge; scope in
 your prompt becomes the suggested answers. Planning questions go to you. After
 agreement, implementation blockers return to the owning coder, who can request
-architect arbitration. Publication and merge follow the scope you confirmed.
+architect arbitration. Publication and merge follow the scope you confirmed or later changed.
 Merge requires passing project checks, no open adversary findings, a final
 architect pass on the PR head, passing GitHub checks and required reviews, and a
 mergeable PR.
