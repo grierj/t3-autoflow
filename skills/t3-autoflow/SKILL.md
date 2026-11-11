@@ -14,9 +14,12 @@ Use [validation](references/validation.md) for handoff and check helpers.
 
 ## Scope and invariants
 
-- Preserve the user's requested scope. Record whether they authorized local work,
-  PR publication, and merge. Invoking this skill alone does not authorize all three.
-  Settle missing scope during planning, before autonomous execution.
+- Before any delegation, show the user a table of the selected models by role
+  and ask them to confirm or change it. In the same request, ask whether the work
+  should result in a PR and, if so, whether to merge it after all requirements
+  pass. Wait for answers. See the confirmation step in the flow reference.
+- Preserve the confirmed scope: local work only, PR publication, or PR and merge.
+  Invoking this skill alone does not authorize publication or merge.
 - One flow and one code writer per checkout. Delegates may share the flow checkout
   or use T3-managed worktree isolation. Multiple writers in one flow are allowed
   only as an optional wave of slices, each in its own T3-managed worktree, when
@@ -61,8 +64,8 @@ Store artifacts outside the checkout, for example under
 role results. Terra may write command evidence to paths assigned in its brief.
 Persist the flow checkout path, each delegate's isolation and returned checkout/branch,
 wave groupings with their common base revision and integration order, demoted
-slices, integration revisions, parent thread ID/link, branch/base, authorized actions,
-selected models, original coder ownership, findings and fix attempts, discovered
+slices, integration revisions, parent thread ID/link, branch/base, confirmed PR
+and merge answers, confirmed models, original coder ownership, findings and fix attempts, discovered
 checks and their sources, accepted plan, final architect review and its candidate
 revision, current phase/task, child task IDs and
 thread links, last verified revision, PR URL, and whether merge was attempted. Append
@@ -87,7 +90,9 @@ same revision and checkout content that will be published.
   Reconcile artifacts against branch, every recorded checkout and revision, T3
   activity, and PR state. Refuse any active writer, unknown changes in any
   recorded checkout, a different checkout, or an ambiguous merge.
-  Recheck model availability and project test instructions; rerun stale checks. Reuse validated artifacts,
+  Recheck model availability and project test instructions; rerun stale checks.
+  Reuse confirmed scope. If a confirmed model is unavailable, show the revised
+  table and confirm it with the user before delegating. Reuse validated artifacts,
   but create fresh children for new work. Resume in the original parent where
   possible; cross-thread resume requires confirming that the old owner is inactive.
   A missing or ambiguous record requires operator reconciliation, not guessing.

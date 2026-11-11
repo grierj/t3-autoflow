@@ -78,15 +78,17 @@ to sequential repair. A fresh child can continue that ownership using the same
 selected target and the full history of findings and attempts. Fixers do not
 replace the owning coder.
 
-Record provider, model, options, and role before launch. Keep selections stable
-across retries and re-reviews. If a needed role has no available target, report
-that limitation and ask for a choice rather than silently substituting. An exact
+Record provider, model, options, role, and the preference or override that
+chose each target. Present them for user confirmation as described in
+[flow.md](flow.md) before launch. Keep confirmed selections stable across
+retries and re-reviews. If a needed role has no available target, report that
+limitation in the confirmation and ask for a choice rather than silently substituting. An exact
 prompt choice must be honored or reported unavailable. After a provider error,
 follow the runtime's bounded retry path.
 
 ## Discover publication defaults
 
-When publication is authorized, have Terra inspect the repository's Git remotes, upstream,
+When the user confirms a PR, have Terra inspect the repository's Git remotes, upstream,
 contributor instructions, and GitHub default branch to determine destination and
 base. Respect prompt overrides and existing PR targets. Resolve ambiguous forks
 or branches during planning. Local-only flows require no remote or GitHub login.
