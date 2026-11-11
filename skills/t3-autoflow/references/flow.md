@@ -5,14 +5,54 @@
 1. Read repository instructions. Confirm a clean Git checkout and no active flow
    or writer targeting it. Never stash or discard existing work.
 2. Discover project checks and select roles through T3 using
-   [discovery.md](discovery.md). Record targets, check sources, and authorization
-   for local work, publication, and merge. Establish the workflow lead and Terra
-   operations role using [runtime.md](runtime.md).
-3. For publication, Terra verifies GitHub access, remote, and base. Local-only
+   [discovery.md](discovery.md). Record check sources. Establish the workflow
+   lead and Terra operations role using [runtime.md](runtime.md).
+3. Confirm models and scope with the user, as described below, before any
+   delegation.
+4. For publication, Terra verifies GitHub access, remote, and base. Local-only
    flows need no GitHub access. Record the original branch and base SHA.
-4. Create the external flow directory and record the parent thread and checkout.
-   After plan agreement, create `autoflow/<flow-id>` as the flow branch. Use shared
-   or T3-managed worktree isolation as described in the runtime contract.
+5. Create the external flow directory and record the parent thread, checkout,
+   and confirmed settings. After plan agreement, create `autoflow/<flow-id>` as
+   the flow branch. Use shared or T3-managed worktree isolation as described in
+   the runtime contract.
+
+## Confirm models and scope
+
+The host parent asks the user before the first delegation; children never
+contact humans. Show a Markdown table of the selected targets with one row per
+role: workflow lead, each architect, the coder, adversary, and fixer pools, and
+Tests and GitHub. Use these columns:
+
+| Role | Provider | Model | Options | Source |
+| --- | --- | --- | --- | --- |
+
+`Source` is either the prompt override or the skill preference that chose the
+target. Give a pool one row per selected target. Below the table, note limits:
+a single available architect, preferred models missing from the catalog,
+equivalents chosen for the workflow lead, and expected writer/adversary overlap.
+
+In the same request, ask:
+
+1. Confirm these models, or name changes.
+2. Should the work result in a pull request? If not, the flow is local only
+   and ends on the architect-approved flow branch.
+3. If a PR is opened, should Terra merge it after all requirements pass?
+   Requirements are: discovered project checks pass, no adversary findings
+   remain open, the final architect review passes on the exact head, GitHub
+   checks and required reviews pass, and GitHub reports the PR mergeable.
+
+Ask every question, even when the prompt already answers it. Offer the prompt's
+answers as defaults. Use the host's structured question tool when available;
+otherwise ask in chat and end the turn. Do not plan, delegate, or create the
+flow branch until the user answers.
+
+Resolve requested model changes through the live T3 catalog. Report unavailable
+models or unsupported options rather than substituting. Show the revised table
+and ask again until the user confirms it. Record the confirmed targets, the PR
+and merge answers, and the confirmation in flow state and `ledger.jsonl`. A
+confirmed PR does not authorize merge. Later scope changes need an explicit user
+instruction; record each one in flow state and the ledger. The latest recorded
+scope governs publication and merge.
 
 ## Plan with architects
 
@@ -105,8 +145,8 @@ the user rather than pretending they agreed.
 Relay planning questions from any plan version to the user and record answers.
 Send the answers with that plan to the next architect in the exchange. Once an
 architect agrees and questions are resolved, freeze the plan and begin without
-a redundant approval request. Publication and merge still require the user's
-authorization.
+a redundant approval request. Publication and merge follow the latest recorded
+scope.
 
 ## Implement and review
 
@@ -258,10 +298,14 @@ final architect review, and Terra push. Link again and wait through T3 as needed
 means no CI suite was reported, not that a suite ran successfully. Query failures
 are blockers. Branch protection and required reviews still apply.
 
-Terra merges only when authorized, checks and reviews pass on the current head,
-and GitHub reports readiness. Record `mergeAttempted: true` before one merge-commit
-attempt. Never bypass protection or retry an ambiguous merge. Inspect PR state
-to establish the outcome. The host parent unwatches when finished or handing back.
+Terra merges only when the latest recorded scope authorizes merge, through the
+preflight confirmation or a later explicit user instruction, every merge
+requirement listed in preflight holds on the current head, and GitHub reports
+readiness.
+Record `mergeAttempted: true` before one merge-commit attempt. Never bypass
+protection or retry an ambiguous merge. Inspect PR state to establish the outcome.
+Without merge authorization, finish with the open, linked PR and report it.
+The host parent unwatches when finished or handing back.
 
 ## Termination
 

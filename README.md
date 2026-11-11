@@ -23,6 +23,11 @@ override those choices. There are no setup files or fixed provider/model IDs to 
 - GPT Terra runs all tests and handles all GitHub interactions and PR operations.
   Test failures and PR breakage return to a coder.
 
+Before starting, the skill shows a table of the selected models by role and asks
+you to confirm or change them. It also asks whether the work should result in a
+PR and, if so, whether to merge it after all requirements pass. Nothing is
+delegated until you answer.
+
 Repeat fixes and adversary review until no fixes remain or the original coder
 reports no progress. The coder can ask an architect to arbitrate. Larger changes
 stay with coders. After final checks, the primary architect reviews the
@@ -53,9 +58,13 @@ Python 3 and Git are required. Publication also needs GitHub access.
 - `Use $t3-autoflow status`, `stop`, or `resume` with a flow ID.
 
 The skill reads repository instructions, manifests, CI, and test scripts to choose
-checks. Planning questions go to you. After agreement, implementation blockers return
-to the owning coder, who can request architect arbitration. Publication and merge follow the
-scope you authorized.
+checks. It always asks you to confirm the models, the PR, and the merge; scope in
+your prompt becomes the suggested answers. Planning questions go to you. After
+agreement, implementation blockers return to the owning coder, who can request
+architect arbitration. Publication and merge follow the scope you confirmed or later changed.
+Merge requires passing project checks, no open adversary findings, a final
+architect pass on the PR head, passing GitHub checks and required reviews, and a
+mergeable PR.
 
 Delegates can share the flow checkout or use T3-managed worktrees. Ask for
 worktree isolation when you want a separate checkout. T3 creates and manages
