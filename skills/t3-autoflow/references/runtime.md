@@ -76,9 +76,21 @@ use the live tool schema to select that revision. If T3 cannot provide the
 required starting content, stop and reconcile before proceeding.
 
 After an isolated coder or fixer finishes, inspect its actual checkout and diff.
-The parent commits only intended changes and integrates them into the flow
-branch, for example by cherry-picking, one slice at a time even when several
-wave results are ready. Route conflicts to the owning coder of the slice being
+The parent commits only intended changes. A sequential task's changes are then
+integrated into the flow branch, for example by cherry-picking. A wave slice's
+commit stays in its own checkout through its review loop and is integrated only
+after that loop is clean, as the flow procedure describes. Integrate one slice at
+a time even when several wave results are ready.
+
+T3 starts a new worktree from the parent's commit, not from a chosen revision.
+A wave fix-round coder therefore gets a new T3 worktree, and its brief names the
+slice's recorded commit. Before editing, the child checks out that commit inside
+its own prepared checkout, for example with `git switch --detach <sha>`, and
+verifies that HEAD matches it and the checkout is clean. All worktrees share one
+repository, so the commit is available there. This is not worktree creation; it
+only moves the checkout T3 prepared. If the commit is unavailable or the
+verification fails, the child returns `blocked` and the slice is demoted to
+sequential. Route conflicts to the owning coder of the slice being
 integrated; a wave slice demoted by overlap is repaired by its owning coder on
 the new integrated base, sequentially. Record source and integrated revisions
 and the integration order. An integrated fixer change goes directly to runner

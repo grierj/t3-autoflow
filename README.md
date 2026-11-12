@@ -78,8 +78,8 @@ mergeable PR.
 
 Delegates can share the flow checkout or use T3-managed worktrees. Ask for
 worktree isolation when you want a separate checkout. T3 creates and manages
-the worktrees; the parent integrates isolated changes into the flow branch
-before the runner runs checks and adversaries review. When dependency-ready slices
+the worktrees; the parent integrates a sequential task's isolated changes into
+the flow branch before the runner runs checks and adversaries review. When dependency-ready slices
 have specific, disjoint file scope and frozen interfaces, the lead may run
 their coders as a parallel wave, each in its own worktree. Each wave slice
 finishes its adversary review and fixes in its own worktree before it is

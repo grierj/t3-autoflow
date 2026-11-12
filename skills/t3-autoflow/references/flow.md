@@ -236,9 +236,10 @@ require arbitration or an agreed plan revision first.
 A wave slice runs its whole review loop, steps 1 and 3 to 5 below, in its own
 worktree before integration. The parent commits the coder's intended changes
 there; the runner checks and adversaries review that worktree and commit. Each
-fix round is a fresh coder task in a new T3 worktree started from the slice's
-latest committed revision, so only one writer ever uses a checkout. If T3 cannot
-start a child from that revision, demote the slice to sequential. Integrate a
+fix round is a fresh coder task in a new T3 worktree that checks out the
+slice's latest recorded commit before editing, as the runtime contract
+describes, so only one writer ever uses a checkout. If the child cannot reach
+that commit, demote the slice to sequential. Integrate a
 wave slice into the flow branch only after its loop ends with no open findings;
 the runner then reruns the applicable checks on the flow branch. A failure,
 overlap, or conflict at that point demotes the slice: its owning coder repairs
