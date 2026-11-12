@@ -7,28 +7,33 @@ threads. This pack requires Python 3, Git, and authenticated `gh` for publicatio
 
 ## Workflow lead and host parent
 
-GPT 6.1 Terra or an available equivalent makes workflow decisions. If the current
-parent is that selected model, it runs the flow directly. Otherwise, delegate
-coordination decisions to the selected workflow model with the current artifacts
-and available role targets. The host parent carries out its routing decisions
-through T3 and saves results. Do not silently let the parent take over the lead's
-role because it uses a different model. A coordination result is JSON containing
+The workflow lead makes workflow decisions. By default, the lead is GPT 6.1 Terra
+or a similar model. If the parent is that model, it leads directly. Otherwise
+the parent delegates coordination decisions to an available Terra-like model.
+This default is not required: use a lead named in the prompt, including the
+parent itself, and if no Terra-like model is available, the parent leads. Record
+the lead and the reason, and keep it for the flow. A delegated lead receives the
+current artifacts and available role targets, and the host parent carries out
+its routing decisions through T3 and saves results. A coordination result is JSON containing
 the next phase, role, task brief, and supporting evidence paths. The parent checks
 that the routing follows this procedure before dispatching. The handoff validator
 does not validate coordination or operations results.
 
-All test execution and GitHub interactions go through GPT Terra. If the parent
-is not the selected Terra target, use bounded Terra operations tasks for checks,
+All test execution and GitHub interactions go through the test and PR runner,
+preferably GPT Terra or a similar model. If the parent is not the selected runner
+target, use bounded runner tasks for checks,
 GitHub reads, publication, and merge. Supply exact commands, candidate revision,
-authorized actions, and evidence paths. Terra operations may write check evidence
-and perform explicitly authorized GitHub actions. They must not implement fixes.
+authorized actions, and evidence paths. Runner tasks may write check evidence
+and perform explicitly authorized GitHub actions. They must not edit code or
+implement fixes, however small. They return failures with evidence, and the
+parent routes them as in Route fixes in [flow.md](flow.md).
 Use the check helper's JSON evidence for test results and verify actual PR state
 for publication results. Reserve JSON handoff schemas for the role results they
 cover; operations return evidence paths, command outcomes, PR URL, and head SHA.
 
 The host parent owns T3 task lifecycle, durable artifacts, PR linking, and watches.
 These host bookkeeping calls stay with the parent even when another model leads.
-Children never watch PRs. A Terra child links immediately after its PR mutation;
+Children never watch PRs. A runner child links immediately after its PR mutation;
 the parent also links the returned PR before proceeding. Delegate PR operations
 one mutation at a time so results can be recorded and reconciled before continuing.
 
@@ -74,8 +79,8 @@ branch, for example by cherry-picking, one slice at a time even when several
 wave results are ready. Route conflicts to the owning coder of the slice being
 integrated; a wave slice demoted by overlap is repaired by its owning coder on
 the new integrated base, sequentially. Record source and integrated revisions
-and the integration order. A fixer change still returns to its owning coder
-for acceptance before Terra checks and adversary review in the flow checkout.
+and the integration order. An integrated fixer change goes directly to runner
+checks and the final architect review in the flow checkout.
 An isolated child's result alone does not establish that integration succeeded.
 
 Reviews of uncommitted flow changes use shared isolation. An isolated reviewer
@@ -90,14 +95,14 @@ recovery and leave lifecycle management to T3.
 
 T3's tool role is separate from the autoflow model role. Map architect planning
 and plan exchange, which can return a revised plan, to `design`, coders and fixers
-to `implementation`, Terra checks to `test`, the final architect review and adversaries
-to `review`, and architect arbitration or workflow coordination to `general`. Select a supported role for Terra GitHub operations.
+to `implementation`, runner checks to `test`, the final architect review and adversaries
+to `review`, and architect arbitration or workflow coordination to `general`. Select a supported role for runner GitHub operations.
 
 The brief must contain the repository path, branch, read/write scope, goal,
 acceptance criteria, relevant plan and evidence, output contract, and instructions
 not to delegate further or contact humans. Planning and plan-review briefs also
 carry the discovered project checks and the authorized scope and actions. Read-only roles must not write result
-files; return JSON and let the parent save it. Only Terra operations children
+files; return JSON and let the parent save it. Only runner children
 may publish or merge, within their explicit brief.
 
 `mode: "wait"` can obtain a result in the current turn. For a parallel wave,
@@ -126,7 +131,7 @@ architect arbitration. Permission prompts remain under the host's control.
 
 ## Check and publish
 
-Terra runs exact discovered project checks with `scripts/run-check.py`. The helper
+The runner runs exact discovered project checks with `scripts/run-check.py`. The helper
 executes one command in the foreground and records exit status, argv, cwd, HEAD,
 and output path. It has no process registry, retry loop, or wakeup mechanism.
 Freeze writers in the checkout being checked or reviewed and verify its
@@ -134,11 +139,11 @@ tracked/untracked changes before and after. Any unexpected change there
 invalidates their results. Final checks and publication freeze every writer,
 as the flow procedure requires.
 
-Terra uses Git/`gh` or available GitHub tools for all GitHub interactions.
+The runner uses Git/`gh` or available GitHub tools for all GitHub interactions.
 Immediately after creating or pushing to a PR, call `link_pull_request` with the full URL as the next tool
 call. Every PR in a stack must be linked, though autoflow normally uses one PR.
-The parent owns watches. Have Terra read existing comments and route needed
-changes to a coder before calling `watch_pull_request`; then end the turn. On a CI wake, Terra inspects actual checks,
+The parent owns watches. Have the runner read existing comments and route needed
+changes to the owning coder before calling `watch_pull_request`; then end the turn. On a CI wake, the runner inspects actual checks,
 reviews, conflicts, and head SHA. Do not treat a wake as a merge decision.
 Never use `gh --watch`, sleep loops, or scheduled polling. If a later invocation
 requires waiting again, follow the current tool instructions for watch registration.

@@ -5,7 +5,9 @@ description: Run a planned, multi-model coding flow in T3 Code with adversarial 
 
 # T3 autoflow
 
-Use GPT 6.1 Terra or equivalent to lead the workflow in the current T3 thread.
+By default, delegate workflow decisions to GPT 6.1 Terra or a similar model
+unless the parent is one. The prompt can choose another lead, including the
+parent; with no Terra-like model available, the parent leads.
 T3 owns child execution, cancellation, and completion wakeups. This is an agent-followed procedure, not a
 sandboxed workflow engine. Read [the runtime contract](references/runtime.md)
 before starting or resuming; read [the flow procedure](references/flow.md) to run.
@@ -29,25 +31,29 @@ Use [validation](references/validation.md) for handoff and check helpers.
   T3 owns worktree creation and lifecycle; follow the isolation and integration
   rules in the runtime contract.
 - Discover available providers and models through T3 and select them by role.
-  Honor prompt overrides; record the choices. No silent substitution or CLI relay.
+  Role models are recommendations, not requirements. Honor prompt overrides and
+  record the choices. Never silently replace a model the user named; no CLI relay.
 - Architects plan modular slices. When two are available, the primary and
   secondary architects revise each other's plan until one accepts it unchanged.
-  Coders own implementation, fixers return small fixes to the owning coder, and
-  adversaries re-review until no fixes remain or the original coder stops for
-  lack of progress. Coders can request architect arbitration. Use the role
-  preferences in discovery and the briefs in the flow reference.
+  Coders own implementation and fix every adversary finding, architect review
+  gap, and pre-PR check failure. Fixers handle only low-complexity CI failures
+  on an open PR and send larger ones to the owning coder. Adversaries re-review
+  until no fixes remain or the original coder stops for lack of progress. Coders
+  can request architect arbitration. Follow Route fixes in the flow reference,
+  the role preferences in discovery, and the flow briefs.
 - Before publication or local handoff, the primary architect reviews the
   integrated code against every success criterion. Require a validated `review`
   pass on the exact candidate; changes invalidate it. See the final review in
   the flow reference.
-- GPT Terra handles all test runs and GitHub interactions, including PR operations.
-  Send test and PR failures to a coder. Include context in each brief; children
-  inherit no history.
+- The test and PR runner, preferably GPT Terra or a similar model, handles all
+  test runs and GitHub interactions, including PR operations. It reports
+  failures with evidence and does not edit code; fixes go to a coder or fixer.
+  Include context in each brief; children inherit no history.
 - For architect, coder, fixer, and adversary handoffs, request JSON only. Save
   the exact result outside the checkout and validate it with `python3 <skill-dir>/scripts/validate.py result <kind> <file>` before using
   its verdict. Do not derive control decisions from a prose summary or repair
   malformed results yourself. See the validator's `schemas` command for contracts.
-  Workflow decisions and Terra operations use the evidence rules in runtime.md.
+  Workflow decisions and runner tasks use the evidence rules in runtime.md.
 - Unit/e2e evidence comes from executing commands discovered in the project, never a coder's
   claim. Use `scripts/run-check.py` and inspect its JSON output and captured log.
 - Architects and adversaries inspect only. Their read-only behavior is an instruction,
@@ -62,7 +68,7 @@ Use [validation](references/validation.md) for handoff and check helpers.
 
 Store artifacts outside the checkout, for example under
 `~/.local/state/t3-autoflow/<flow-id>/`. The parent writes flow state and saved
-role results. Terra may write command evidence to paths assigned in its brief.
+role results. The runner may write command evidence to paths assigned in its brief.
 Persist the flow checkout path, each delegate's isolation and returned checkout/branch,
 wave groupings with their common base revision and integration order, demoted
 slices, integration revisions, parent thread ID/link, branch/base, confirmed PR

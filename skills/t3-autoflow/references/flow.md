@@ -6,10 +6,10 @@
    or writer targeting it. Never stash or discard existing work.
 2. Discover project checks and select roles through T3 using
    [discovery.md](discovery.md). Record check sources. Establish the workflow
-   lead and Terra operations role using [runtime.md](runtime.md).
+   lead and test and PR runner using [runtime.md](runtime.md).
 3. Confirm models and scope with the user, as described below, before any
    delegation.
-4. For publication, Terra verifies GitHub access, remote, and base. Local-only
+4. For publication, the runner verifies GitHub access, remote, and base. Local-only
    flows need no GitHub access. Record the original branch and base SHA.
 5. Create the external flow directory and record the parent thread, checkout,
    and confirmed settings. After plan agreement, create `autoflow/<flow-id>` as
@@ -21,22 +21,22 @@
 The host parent asks the user before the first delegation; children never
 contact humans. Show a Markdown table of the selected targets with one row per
 role: workflow lead, each architect, the coder, adversary, and fixer pools, and
-Tests and GitHub. Use these columns:
+the test and PR runner. Use these columns:
 
 | Role | Provider | Model | Options | Source |
 | --- | --- | --- | --- | --- |
 
 `Source` is either the prompt override or the skill preference that chose the
 target. Give a pool one row per selected target. Below the table, note limits:
-a single available architect, preferred models missing from the catalog,
-equivalents chosen for the workflow lead, and expected writer/adversary overlap.
+a single available architect, preferred models missing from the catalog and
+what replaced them, the workflow lead choice, and expected writer/adversary overlap.
 
 In the same request, ask:
 
 1. Confirm these models, or name changes.
 2. Should the work result in a pull request? If not, the flow is local only
    and ends on the architect-approved flow branch.
-3. If a PR is opened, should Terra merge it after all requirements pass?
+3. If a PR is opened, should the runner merge it after all requirements pass?
    Requirements are: discovered project checks pass, no adversary findings
    remain open, the final architect review passes on the exact head, GitHub
    checks and required reviews pass, and GitHub reports the PR mergeable.
@@ -118,7 +118,7 @@ states the `issue`, and gives both:
   named by task ID and field, such as a consumer of an interface no task defines.
 - **`failure`:** what would concretely go wrong if the plan ran as written.
 
-Architects do not run checks during planning; any test they want goes to Terra.
+Architects do not run checks during planning; any test they want goes to the runner.
 An observation that is only a preference, such as naming, phrasing, or a
 different but equally valid split, is not grounds for revision. Record it in
 `dropped` with the reason it was not acted on. Agreement can carry `dropped`
@@ -147,6 +147,44 @@ Send the answers with that plan to the next architect in the exchange. Once an
 architect agrees and questions are resolved, freeze the plan and begin without
 a redundant approval request. Publication and merge follow the latest recorded
 scope.
+
+## Route fixes
+
+Route every fix by where the problem was found, not by how small the change
+looks. Before the PR opens, the fixer has no role.
+
+| Problem | Goes to |
+| --- | --- |
+| Adversary review findings, at any size or severity | Owning coder |
+| Final architect review findings | Owning coder |
+| Runner check failures before the PR opens, slice or final | Owning coder |
+| Base-update conflicts and PR review comments | Owning coder |
+| CI failure on an open PR that is low complexity | Fixer |
+| Any other CI failure on an open PR | Owning coder |
+
+The test and PR runner is not a fixer. A runner task runs checks and GitHub
+operations and returns evidence; do not ask it to edit code, even for a one-line
+change. If the same model is also selected as the fixer, the fix is a separate
+fixer task with the `implementation` role, not part of a runner task.
+
+A CI failure is low complexity only when all of these hold:
+
+- The CI log identifies the cause and its location.
+- The fix is mechanical and local: formatting, lint, a type error, a missing
+  import, or a generated file or snapshot that the intended change explains.
+- It changes no behavior, interface, plan decision, or acceptance criterion,
+  and does not weaken a test to make it pass.
+- It stays within the files of one slice.
+
+When in doubt, send it to the owning coder. Flaky, infrastructure, credential,
+or base-branch failures are not code fixes; investigate them through the runner or
+record a blocker. Give the fixer the PR URL, head SHA, failing check, exact CI
+log, and file scope. If the fix proves larger, the fixer returns `blocked` and
+the failure goes to the owning coder. A completed fixer change skips coder
+acceptance and adversary re-review. The runner reruns affected checks, the
+primary architect does a fresh final review with the fixer's diff and the CI
+log, and the runner pushes. Architect findings go to the owning coder, not back
+to the fixer.
 
 ## Implement and review
 
@@ -186,7 +224,7 @@ Then, per slice:
    scope, including test code, and returns a `coder` result. It leaves changes
    for inspection without committing or pushing. In a wave, launch each coder
    in its own worktree without waiting for the others; completions wake the
-   parent under the runtime contract. All test execution goes to Terra,
+   parent under the runtime contract. All test execution goes to the runner,
    including targeted reproductions and checks proposed by other roles.
 2. Inspect the diff and integrate isolated changes into the flow branch. The
    parent integrates one slice at a time, as results return, and records the
@@ -195,7 +233,7 @@ Then, per slice:
    remaining wave slices. Overlap or an
    integration conflict demotes the later slice to sequential: hold its
    integration and return it to its owning coder to repair on the new
-   integrated base. Record the demotion; it is not a flow failure. Terra
+   integrated base. Record the demotion; it is not a flow failure. The runner
    runs the applicable discovered checks using the check helper. Send failures
    and exact logs to the owning coder for diagnosis and repair.
 3. Adversaries inspect the same frozen candidate and return `review` results.
@@ -203,13 +241,11 @@ Then, per slice:
    correctness, security, efficiency, and UI behavior where relevant within these
    reviews. Prefer reviewers who did not write the code, without making that a
    condition of proceeding. Read-only reviews may run concurrently.
-4. Route small, scoped fixes to a fixer. Larger changes stay with the owning
-   coder. A fixer returns a `coder` result and its changes to the owning coder,
-   who inspects, accepts or revises them, and remains responsible for the slice.
-   A fixer cannot declare the slice complete or decide that the loop has stalled.
-   Fix rounds stay sequential within a slice, including for wave slices; a
-   slice entering its fix loop no longer counts as parallel with its own fixer.
-5. After the coder accepts the changes, Terra reruns affected checks. Adversaries
+4. Send every adversary finding to the owning coder with the review evidence,
+   including findings with a small proposed fix. The coder repairs them and
+   returns a `coder` result. Fixers take no part in this loop; see Route fixes.
+   Fix rounds stay sequential within a slice, including for wave slices.
+5. After the coder's repair, the runner reruns affected checks. Adversaries
    re-review the resulting candidate with prior findings and fix evidence. Use
    fresh review tasks. Repeat until no fixes remain or the original coder reports
    that no progress is being made.
@@ -226,7 +262,7 @@ If the architect recommends changed slices or implementation details, have the
 primary architect produce a new validated `plan` and run it through the same
 architect exchange when a secondary architect is available.
 Reconcile completed work and task IDs before replacing the remaining queue.
-Return the decision to the owning coder, then continue through Terra checks and
+Return the decision to the owning coder, then continue through runner checks and
 adversary review. Arbitration cannot turn failed verification into a pass.
 
 If the original coder returns `stalled`, stop with the remaining findings and
@@ -236,14 +272,14 @@ when they cannot be resolved within the authorized scope.
 
 ## Final checks and architect review
 
-When all slices are complete, Terra runs the full applicable project checks,
+When all slices are complete, the runner runs the full applicable project checks,
 including integration and e2e suites. Failures return to the owning coder and
 reopen the same fix and adversary review cycle. Rerun affected checks after fixes
 and the full final check set before publication.
 
-Inspect and commit only intended changes. For authorized publication, Terra
+Inspect and commit only intended changes. For authorized publication, the runner
 fetches the base. If it moved, update the branch and send conflicts or
-implementation changes to a coder. Terra reruns checks and adversaries re-review
+implementation changes to the owning coder. The runner reruns checks and adversaries re-review
 changed code before the final architect review. Freeze all writers in every
 checkout and verify that all evidence matches the exact candidate. No wave
 remains active from this point through publication.
@@ -251,10 +287,10 @@ remains active from this point through publication.
 Delegate a fresh, read-only review to the primary architect using its
 recorded target. Supply the accepted plan and any agreed revisions, every task's
 `acceptance` criteria, the candidate SHA and diff base, the full integrated diff,
-resolved findings, and Terra's final check evidence. The architect inspects the
+resolved findings, and the runner's final check evidence. The architect inspects the
 actual code and cross-slice behavior against the goal, implementation decisions,
 and every success criterion. Passing tests or coder summaries alone do not prove
-completion. Any additional test execution goes to Terra.
+completion. Any additional test execution goes to the runner.
 
 Request the existing `review` JSON contract. In `summary`, identify the reviewed
 SHA and map each task ID and acceptance criterion to code locations and
@@ -265,7 +301,7 @@ criterion is satisfied. Save and validate the exact response, then verify its
 coverage against the plan. Record the result path and reviewed revision in flow
 state. A missing criterion or stale review cannot authorize publication.
 
-Send findings to the owning coder through the existing fix, Terra check, and
+Send findings to the owning coder through the existing fix, runner check, and
 adversary review cycle. Then repeat final checks and request a fresh architect
 review with prior findings and fix evidence. Preserve the existing stalled and
 blocked termination rules. Do not weaken success criteria to obtain a pass;
@@ -273,18 +309,19 @@ plan revisions require the architect exchange described above.
 
 For local-only scope, finish with the architect-approved branch and report it.
 For publication, require the architect's validated `pass` on the exact candidate
-immediately before Terra pushes and opens the PR. Changes to the candidate or
+immediately before the runner pushes and opens the PR. Changes to the candidate or
 accepted plan invalidate that pass, including base updates and later PR fixes.
 Repeat the applicable checks, adversary reviews, and final architect review
-before publishing the changed candidate. On resume, reuse a final review only
+before publishing the changed candidate. A fixer change skips the adversary
+reviews; see Route fixes. On resume, reuse a final review only
 after verifying that its candidate, plan, and supporting evidence still match.
 
 ## Publication and merge
 
-Terra handles all GitHub interactions and PR operations.
+The runner handles all GitHub interactions and PR operations.
 Use force-with-lease only for the flow's own previously published, rebased branch.
 
-Terra pushes and opens a ready PR. Include the goal, implementation summary,
+The runner pushes and opens a ready PR. Include the goal, implementation summary,
 verification, the architect's success-criteria review, unresolved limitations,
 and relevant model overlap or plan changes.
 Keep the body current after fixes. Include a useful plan summary rather than a
@@ -292,13 +329,15 @@ link to an inaccessible local artifact. Link the PR immediately as described in
 runtime.md.
 
 When requested work awaits CI or reviews, the host parent registers a T3 watch
-and yields. On a wake, Terra inspects checks, review comments, conflicts, and the
-head SHA. PR breakage returns to a coder, then Terra checks, adversary re-review,
-final architect review, and Terra push. Link again and wait through T3 as needed. No reported CI checks
+and yields. On a wake, the runner inspects checks, review comments, conflicts, and the
+head SHA. Route PR breakage as in Route fixes: low-complexity CI failures go to
+a fixer and everything else to the owning coder. A coder change gets runner
+checks, adversary re-review, final architect review, and a runner push. A fixer
+change gets the same without the adversary re-review. Link again and wait through T3 as needed. No reported CI checks
 means no CI suite was reported, not that a suite ran successfully. Query failures
 are blockers. Branch protection and required reviews still apply.
 
-Terra merges only when the latest recorded scope authorizes merge, through the
+The runner merges only when the latest recorded scope authorizes merge, through the
 preflight confirmation or a later explicit user instruction, every merge
 requirement listed in preflight holds on the current head, and GitHub reports
 readiness.
@@ -313,5 +352,5 @@ Cancel outstanding children, remove the watch, and preserve the branch and PR.
 Write `RECOVERY.md` with the state, last verified revision, remaining tasks,
 blocker or coder's stalled decision, failed attempts, and any architect reasoning.
 Give a concrete next action and explain how to resume in the recorded parent
-thread. Do not delete work. Include recovery in the final reply. Terra posts a
+thread. Do not delete work. Include recovery in the final reply. The runner posts a
 PR comment only when messaging was authorized.
