@@ -7,8 +7,10 @@ optional PR publication and merge. T3 owns child execution and CI wakeups.
 The agent discovers testing instructions from the project and selects models
 from T3's live provider/model catalog according to each role. Your prompt can
 override those choices. There are no setup files or fixed provider/model IDs to maintain.
+The models below are recommendations for each role; none is required.
 
-- GPT 6.1 Terra or equivalent leads the workflow.
+- GPT 6.1 Terra or a similar model leads the workflow by default; the prompt
+  can choose another lead, including the parent.
 - GPT Astra, Claude Opus, and Muse Wonder Full are the architect pool. When two
   are available, the primary architect drafts the plan and the secondary reviews
   it. Each either accepts the other's plan, sending it to the workflow lead, or
@@ -18,19 +20,23 @@ override those choices. There are no setup files or fixed provider/model IDs to 
 - Claude Sonnet and GPT Sol own code implementation.
 - Sonnet, Sol, Muse Spark, and Grok 4.7 review as adversaries. Prefer a reviewer
   who did not implement the work, without requiring it.
-- Muse Spark, GPT Terra at maximum effort, and Claude Sonnet handle small fixes.
-  Fixer changes go back to the owning coder before adversaries re-review.
-- GPT Terra runs all tests and handles all GitHub interactions and PR operations.
-  Test failures and PR breakage return to a coder.
+- Muse Spark, GPT Terra at maximum effort, and Claude Sonnet fix low-complexity
+  CI failures after the PR opens and send larger ones to the owning coder.
+  Fixer changes skip adversary re-review and go to checks and the final
+  architect review. Adversary findings always go to the owning coder.
+- The test and PR runner, preferably GPT Terra or similar, runs all tests and
+  handles all GitHub interactions and PR operations. It reports failures but
+  does not edit code. Check failures before the PR, and CI failures that are
+  not low complexity, return to the owning coder.
 
 Before starting, the skill shows a table of the selected models by role and asks
 you to confirm or change them. It also asks whether the work should result in a
 PR and, if so, whether to merge it after all requirements pass. Nothing is
 delegated until you answer.
 
-Repeat fixes and adversary review until no fixes remain or the original coder
-reports no progress. The coder can ask an architect to arbitrate. Larger changes
-stay with coders. After final checks, the primary architect reviews the
+Repeat coder fixes and adversary review until no fixes remain or the original
+coder reports no progress. The coder can ask an architect to arbitrate. After
+final checks, the primary architect reviews the
 integrated code against every success criterion before PR publication or local
 handoff. Gaps return to the same fix loop. Changes to the candidate require a
 fresh architect review, including fixes made after the PR opens.
@@ -69,7 +75,7 @@ mergeable PR.
 Delegates can share the flow checkout or use T3-managed worktrees. Ask for
 worktree isolation when you want a separate checkout. T3 creates and manages
 the worktrees; the parent integrates isolated changes into the flow branch
-before Terra runs checks and adversaries review. When dependency-ready slices
+before the runner runs checks and adversaries review. When dependency-ready slices
 have specific, disjoint file scope and frozen interfaces, the lead may run
 their coders as a parallel wave, each in its own worktree. This is optional;
 sequential execution is the default and fallback, integration stays one slice

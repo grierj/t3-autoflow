@@ -51,7 +51,7 @@ user-maintained setup. Choose a timeout from project guidance or expected runtim
 and record it; do not ask the user to create a file. For example, if the project
 instructs `npm test`, record `{"id":"unit","argv":["npm","test"],"timeoutMs":120000}`.
 Preserve the project's actual command, working directory, and environment. Freeze
-writers in the checkout being checked, then have Terra run:
+writers in the checkout being checked, then have the runner run:
 
 ```sh
 python3 <skill-dir>/scripts/run-check.py <check.json> <repo> <new-log> <new-evidence.json>
@@ -59,7 +59,7 @@ python3 <skill-dir>/scripts/run-check.py <check.json> <repo> <new-log> <new-evid
 
 The helper returns nonzero on failure, timeout, or execution error. It never
 reuses evidence filenames. A killed helper may leave an incomplete evidence file;
-that is a failed verification, not a pass. Terra must inspect the recorded
+that is a failed verification, not a pass. The runner must inspect the recorded
 exit code and output, and compare checkout content before/after. HEAD alone does
 not identify uncommitted changes. Tests run in the foreground; timeout kills the
 direct command only. Commands that leave background descendants need their own

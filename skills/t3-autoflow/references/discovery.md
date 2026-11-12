@@ -36,7 +36,7 @@ coding. Missing tooling, credentials, or a failing existing suite is a blocker
 to resolve, not a reason to silently skip it. Revisit test discovery when the
 implementation changes the build or test workflow.
 
-Terra runs applicable checks during implementation and the full set at final
+The runner runs applicable checks during implementation and the full set at final
 verification; do not claim nonexistent suites passed. Record actual
 commands, outcomes, and any explicitly agreed verification limits.
 
@@ -51,18 +51,20 @@ Use these role preferences, resolving names to actual targets in the live catalo
 
 | Role | Preferred models | Responsibility |
 | --- | --- | --- |
-| Workflow lead | GPT 6.1 Terra or equivalent | Run the workflow and route work between roles |
+| Workflow lead | GPT 6.1 Terra or similar (default) | Run the workflow and route work between roles |
 | Architect | GPT Astra, Claude Opus, Muse Wonder Full | Plan, slice work, define implementation details and success criteria; arbitrate when a coder asks; review final code against the accepted plan |
-| Coder | Claude Sonnet, GPT Sol | Own implementation and accept fixer changes |
+| Coder | Claude Sonnet, GPT Sol | Own implementation; fix adversary findings, architect review gaps, and check failures |
 | Adversary | Claude Sonnet, GPT Sol, Muse Spark, Grok 4.7 | Review for concrete defects and regressions |
-| Fixer | Muse Spark, GPT Terra at maximum effort, Claude Sonnet | Make small, scoped fixes and return them to the owning coder |
-| Tests and GitHub | GPT Terra | Run all tests and handle all GitHub interactions and PR operations |
+| Fixer | Muse Spark, GPT Terra at maximum effort, Claude Sonnet | Fix low-complexity CI failures on an open PR; return larger failures to the owning coder |
+| Test and PR runner | GPT Terra or similar | Run all tests and handle all GitHub interactions and PR operations; report failures without editing code |
 
 These are model preferences, not provider IDs or a static catalog. Honor prompt
-overrides. Resolve each name through T3 and use supported options. Terra fixers
-require the catalog's maximum reasoning effort setting. Do not invent an option
-or silently lower that effort. The workflow-equivalent allowance does not by
-itself authorize replacing Terra for tests and GitHub.
+overrides. Resolve each name through T3 and use supported options. A Terra
+fixer should use the catalog's maximum reasoning effort unless the prompt sets
+another; do not invent an option. When one model fills both the fixer and runner
+roles, keep fixer tasks separate from runner tasks; see Route fixes in
+[flow.md](flow.md). The workflow lead and the runner are separate roles and may
+use different models.
 
 Use two distinct architects when available: a primary and a secondary. They
 revise each other's plan, slices, implementation details, and success criteria
@@ -81,14 +83,16 @@ replace the owning coder.
 Record provider, model, options, role, and the preference or override that
 chose each target. Present them for user confirmation as described in
 [flow.md](flow.md) before launch. Keep confirmed selections stable across
-retries and re-reviews. If a needed role has no available target, report that
-limitation in the confirmation and ask for a choice rather than silently substituting. An exact
-prompt choice must be honored or reported unavailable. After a provider error,
+retries and re-reviews. Preferred models are recommendations, never
+requirements. When none is available, choose the best available model for the
+role, note why in the confirmation, and let the user change it; ask for a choice
+only when no suitable target exists. A model named in the prompt must be honored
+or reported unavailable, never silently replaced. After a provider error,
 follow the runtime's bounded retry path.
 
 ## Discover publication defaults
 
-When the user confirms a PR, have Terra inspect the repository's Git remotes, upstream,
+When the user confirms a PR, have the runner inspect the repository's Git remotes, upstream,
 contributor instructions, and GitHub default branch to determine destination and
 base. Respect prompt overrides and existing PR targets. Resolve ambiguous forks
 or branches during planning. Local-only flows require no remote or GitHub login.
