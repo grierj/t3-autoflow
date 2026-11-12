@@ -37,17 +37,22 @@ Use [validation](references/validation.md) for handoff and check helpers.
   secondary architects revise each other's plan until one accepts it unchanged.
   Coders own implementation and fix every adversary finding, architect review
   gap, and pre-PR check failure. Fixers handle only low-complexity CI failures
-  on an open PR and send larger ones to the owning coder. Adversaries re-review
+  on an open PR and trivial base-update conflicts, and send anything larger to
+  the owning coder. Adversaries re-review
   until no fixes remain or the original coder stops for lack of progress. Coders
   can request architect arbitration. Follow Route fixes in the flow reference,
   the role preferences in discovery, and the flow briefs.
+- Follow repository-specific review and merge criteria where possible. Ask the
+  user, with a proposed resolution, when one would create a workflow problem or
+  its place in the workflow is unclear. See discovery.
 - Before publication or local handoff, the primary architect reviews the
   integrated code against every success criterion. Require a validated `review`
   pass on the exact candidate; changes invalidate it. See the final review in
   the flow reference.
 - The test and PR runner, preferably GPT Terra or a similar model, handles all
-  test runs and GitHub interactions, including PR operations. It reports
-  failures with evidence and does not edit code; fixes go to a coder or fixer.
+  test runs, branch updates, and GitHub interactions, including PR operations.
+  It reports to the lead with evidence and does not edit code or resolve
+  conflicts; the lead routes fixes to a coder or fixer.
   Include context in each brief; children inherit no history.
 - For architect, coder, fixer, and adversary handoffs, request JSON only. Save
   the exact result outside the checkout and validate it with `python3 <skill-dir>/scripts/validate.py result <kind> <file>` before using
@@ -73,7 +78,8 @@ Persist the flow checkout path, each delegate's isolation and returned checkout/
 wave groupings with their common base revision and integration order, demoted
 slices, integration revisions, parent thread ID/link, branch/base, confirmed PR
 and merge answers, confirmed models, original coder ownership, findings and fix attempts, discovered
-checks and their sources, accepted plan, final architect review and its candidate
+checks and their sources, repository review and merge criteria with their
+assigned steps, accepted plan, final architect review and its candidate
 revision, current phase/task, child task IDs and
 thread links, last verified revision, PR URL, and whether merge was attempted. Append
 significant events and evidence paths to `ledger.jsonl`. Write before yielding

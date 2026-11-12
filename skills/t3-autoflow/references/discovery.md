@@ -40,6 +40,23 @@ The runner runs applicable checks during implementation and the full set at fina
 verification; do not claim nonexistent suites passed. Record actual
 commands, outcomes, and any explicitly agreed verification limits.
 
+## Find the project's review and merge criteria
+
+Read the same repository instructions for review and merge requirements: review
+concerns, who may review, re-review rules after new commits, where findings must
+be recorded, merge conditions, and how to update a branch from its base. Record
+each with its source. Follow them where possible, alongside the skill's own
+reviews. Assign each to the step where it fits, usually the per-slice adversary
+reviews or the final architect review on the PR, and record the assignment.
+
+Ask the user during the preflight confirmation when following a criterion would
+create a workflow problem, or when it is unclear where in the workflow it
+belongs. Examples: a rule that conflicts with the skill's flow, needs a human or
+a service the flow cannot reach, or names a review without saying when it runs.
+Propose a concrete resolution with each question, such as which step covers the
+review, how the rule maps onto the skill's roles, or what to record for a person
+to check later. Do not silently drop or reinterpret a repository criterion.
+
 ## Select targets from T3
 
 Use the current T3 host's capability-discovery tools to find enabled provider
@@ -55,8 +72,8 @@ Use these role preferences, resolving names to actual targets in the live catalo
 | Architect | GPT Astra, Claude Opus, Muse Wonder Full | Plan, slice work, define implementation details and success criteria; arbitrate when a coder asks; review final code against the accepted plan |
 | Coder | Claude Sonnet, GPT Sol | Own implementation; fix adversary findings, architect review gaps, and check failures |
 | Adversary | Claude Sonnet, GPT Sol, Muse Spark, Grok 4.7 | Review for concrete defects and regressions |
-| Fixer | Muse Spark, GPT Terra at maximum effort, Claude Sonnet | Fix low-complexity CI failures on an open PR; return larger failures to the owning coder |
-| Test and PR runner | GPT Terra or similar | Run all tests and handle all GitHub interactions and PR operations; report failures without editing code |
+| Fixer | Muse Spark, GPT Terra at maximum effort, Claude Sonnet | Fix low-complexity CI failures on an open PR and trivial base-update conflicts; return anything larger to the owning coder |
+| Test and PR runner | GPT Terra or similar | Run all tests, update the branch from its base, and handle all GitHub interactions and PR operations; report to the lead without editing code |
 
 These are model preferences, not provider IDs or a static catalog. Honor prompt
 overrides. Resolve each name through T3 and use supported options. A Terra

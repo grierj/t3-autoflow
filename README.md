@@ -21,12 +21,13 @@ The models below are recommendations for each role; none is required.
 - Sonnet, Sol, Muse Spark, and Grok 4.7 review as adversaries. Prefer a reviewer
   who did not implement the work, without requiring it.
 - Muse Spark, GPT Terra at maximum effort, and Claude Sonnet fix low-complexity
-  CI failures after the PR opens and send larger ones to the owning coder.
+  CI failures after the PR opens and trivial base-update conflicts, and send
+  anything larger to the owning coder.
   Fixer changes skip adversary re-review and go to checks and the final
   architect review. Adversary findings always go to the owning coder.
-- The test and PR runner, preferably GPT Terra or similar, runs all tests and
-  handles all GitHub interactions and PR operations. It reports failures but
-  does not edit code. Check failures before the PR, and CI failures that are
+- The test and PR runner, preferably GPT Terra or similar, runs all tests,
+  updates the branch from its base, and handles all GitHub interactions and PR
+  operations. It reports to the workflow lead but does not edit code. Check failures before the PR, and CI failures that are
   not low complexity, return to the owning coder.
 
 Before starting, the skill shows a table of the selected models by role and asks
@@ -64,12 +65,15 @@ Python 3 and Git are required. Publication also needs GitHub access.
 - `Use $t3-autoflow status`, `stop`, or `resume` with a flow ID.
 
 The skill reads repository instructions, manifests, CI, and test scripts to choose
-checks. It always asks you to confirm the models, the PR, and the merge; scope in
+checks. It also follows the repository's own review and merge criteria where
+possible, and asks you with a proposed resolution when one conflicts with the
+flow or its place in the flow is unclear. It always asks you to confirm the models, the PR, and the merge; scope in
 your prompt becomes the suggested answers. Planning questions go to you. After
 agreement, implementation blockers return to the owning coder, who can request
 architect arbitration. Publication and merge follow the scope you confirmed or later changed.
 Merge requires passing project checks, no open adversary findings, a final
-architect pass on the PR head, passing GitHub checks and required reviews, and a
+architect pass on the PR head, passing GitHub checks and required reviews (a
+repository with no CI passes that one), any repository merge criteria, and a
 mergeable PR.
 
 Delegates can share the flow checkout or use T3-managed worktrees. Ask for
@@ -77,10 +81,11 @@ worktree isolation when you want a separate checkout. T3 creates and manages
 the worktrees; the parent integrates isolated changes into the flow branch
 before the runner runs checks and adversaries review. When dependency-ready slices
 have specific, disjoint file scope and frozen interfaces, the lead may run
-their coders as a parallel wave, each in its own worktree. This is optional;
-sequential execution is the default and fallback, integration stays one slice
-at a time, and a slice whose actual changes overlap is demoted to sequential
-repair by its owning coder.
+their coders as a parallel wave, each in its own worktree. Each wave slice
+finishes its adversary review and fixes in its own worktree before it is
+integrated. This is optional; sequential execution is the default and fallback,
+integration stays one slice at a time, and a slice whose actual changes overlap
+is demoted to sequential repair by its owning coder.
 
 See the [skill](skills/t3-autoflow/SKILL.md),
 [discovery rules](skills/t3-autoflow/references/discovery.md), and

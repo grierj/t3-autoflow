@@ -4,9 +4,10 @@
 
 1. Read repository instructions. Confirm a clean Git checkout and no active flow
    or writer targeting it. Never stash or discard existing work.
-2. Discover project checks and select roles through T3 using
-   [discovery.md](discovery.md). Record check sources. Establish the workflow
-   lead and test and PR runner using [runtime.md](runtime.md).
+2. Discover project checks and repository review and merge criteria, and
+   select roles through T3 using [discovery.md](discovery.md). Record their
+   sources. Establish the workflow lead and test and PR runner using
+   [runtime.md](runtime.md).
 3. Confirm models and scope with the user, as described below, before any
    delegation.
 4. For publication, the runner verifies GitHub access, remote, and base. Local-only
@@ -39,7 +40,11 @@ In the same request, ask:
 3. If a PR is opened, should the runner merge it after all requirements pass?
    Requirements are: discovered project checks pass, no adversary findings
    remain open, the final architect review passes on the exact head, GitHub
-   checks and required reviews pass, and GitHub reports the PR mergeable.
+   checks and required reviews pass, any repository-specific review and merge
+   criteria are met, and GitHub reports the PR mergeable.
+4. Only when needed: how to handle repository review criteria that would create
+   a workflow problem, or whose place in the workflow is ambiguous. Propose a
+   concrete resolution for each, as described in discovery.md.
 
 Ask every question, even when the prompt already answers it. Offer the prompt's
 answers as defaults. Use the host's structured question tool when available;
@@ -151,16 +156,25 @@ scope.
 ## Route fixes
 
 Route every fix by where the problem was found, not by how small the change
-looks. Before the PR opens, the fixer has no role.
+looks. The workflow lead routes; other roles report to it. Before the PR opens,
+the fixer handles only trivial base-update conflicts.
 
 | Problem | Goes to |
 | --- | --- |
 | Adversary review findings, at any size or severity | Owning coder |
 | Final architect review findings | Owning coder |
 | Runner check failures before the PR opens, slice or final | Owning coder |
-| Base-update conflicts and PR review comments | Owning coder |
+| PR review comments | Owning coder |
+| Trivial base-update conflict, before or after the PR opens | Fixer |
+| Base-update conflict that requires choosing between behaviors | Owning coder |
 | CI failure on an open PR that is low complexity | Fixer |
 | Any other CI failure on an open PR | Owning coder |
+
+A base-update conflict is trivial when both sides' intent can be kept without
+choosing between them: adjacent edits, combined import or list entries,
+reordering, or formatting. If the two sides change the same behavior in
+different ways, or a resolution needs a judgment the plan does not settle, it
+goes to the owning coder.
 
 The test and PR runner is not a fixer. A runner task runs checks and GitHub
 operations and returns evidence; do not ask it to edit code, even for a one-line
@@ -178,13 +192,14 @@ A CI failure is low complexity only when all of these hold:
 
 When in doubt, send it to the owning coder. Flaky, infrastructure, credential,
 or base-branch failures are not code fixes; investigate them through the runner or
-record a blocker. Give the fixer the PR URL, head SHA, failing check, exact CI
-log, and file scope. If the fix proves larger, the fixer returns `blocked` and
-the failure goes to the owning coder. A completed fixer change skips coder
-acceptance and adversary re-review. The runner reruns affected checks, the
-primary architect does a fresh final review with the fixer's diff and the CI
-log, and the runner pushes. Architect findings go to the owning coder, not back
-to the fixer.
+record a blocker. Give the fixer the head SHA, file scope, and either the PR
+URL, failing check, and exact CI log, or the conflicting files with both sides.
+If the fix proves larger, the fixer returns `blocked` and the failure goes to
+the owning coder. A completed fixer change skips coder
+acceptance and adversary re-review. The runner reruns affected checks, and the
+primary architect does a fresh final review with the fixer's diff and its CI log
+or conflict evidence before the runner pushes. Architect findings go to the
+owning coder, not back to the fixer.
 
 ## Implement and review
 
@@ -218,6 +233,17 @@ solely by that write-scope limit exits the wave and proceeds sequentially
 under a normal brief, unless the needed scope change is material enough to
 require arbitration or an agreed plan revision first.
 
+A wave slice runs its whole review loop, steps 1 and 3 to 5 below, in its own
+worktree before integration. The parent commits the coder's intended changes
+there; the runner checks and adversaries review that worktree and commit. Each
+fix round is a fresh coder task in a new T3 worktree started from the slice's
+latest committed revision, so only one writer ever uses a checkout. If T3 cannot
+start a child from that revision, demote the slice to sequential. Integrate a
+wave slice into the flow branch only after its loop ends with no open findings;
+the runner then reruns the applicable checks on the flow branch. A failure,
+overlap, or conflict at that point demotes the slice: its owning coder repairs
+it on the integrated base, and adversaries re-review the repair.
+
 Then, per slice:
 
 1. Assign a coder from the coder pool as the slice's owner. It implements the
@@ -226,7 +252,8 @@ Then, per slice:
    in its own worktree without waiting for the others; completions wake the
    parent under the runtime contract. All test execution goes to the runner,
    including targeted reproductions and checks proposed by other roles.
-2. Inspect the diff and integrate isolated changes into the flow branch. The
+2. Inspect the diff and integrate isolated changes into the flow branch; wave
+   slices integrate after their review loop, as described above. The
    parent integrates one slice at a time, as results return, and records the
    integration order. Compare the actual changed files against the declared
    `files`, against integrated slices, and against the declared files of
@@ -278,23 +305,29 @@ reopen the same fix and adversary review cycle. Rerun affected checks after fixe
 and the full final check set before publication.
 
 Inspect and commit only intended changes. For authorized publication, the runner
-fetches the base. If it moved, update the branch and send conflicts or
-implementation changes to the owning coder. The runner reruns checks and adversaries re-review
-changed code before the final architect review. Freeze all writers in every
+fetches the base. If it moved, the runner updates the branch using the method the
+repository's instructions require, such as merging the base in, and rebases when
+they say nothing. Updating the branch is a runner operation; resolving conflicts
+is not. The runner reports conflicts to the lead, which routes them as in Route
+fixes. The runner reruns checks, and adversaries re-review any coder's conflict
+resolution before the final architect review. Freeze all writers in every
 checkout and verify that all evidence matches the exact candidate. No wave
 remains active from this point through publication.
 
 Delegate a fresh, read-only review to the primary architect using its
 recorded target. Supply the accepted plan and any agreed revisions, every task's
 `acceptance` criteria, the candidate SHA and diff base, the full integrated diff,
-resolved findings, and the runner's final check evidence. The architect inspects the
-actual code and cross-slice behavior against the goal, implementation decisions,
-and every success criterion. Passing tests or coder summaries alone do not prove
-completion. Any additional test execution goes to the runner.
+resolved findings, the runner's final check evidence, and the repository review
+criteria assigned to this review. The architect inspects the actual code and
+cross-slice behavior against the goal, implementation decisions, every success
+criterion, and those repository criteria. Passing tests or coder summaries
+alone do not prove completion. Any additional test execution goes to the runner.
 
 Request the existing `review` JSON contract. In `summary`, identify the reviewed
 SHA and map each task ID and acceptance criterion to code locations and
-verification evidence, including any agreed verification limits. Return
+verification evidence, including any agreed verification limits. Give a
+verdict for each assigned repository criterion, including "not affected" where
+the change does not touch it, in the form the repository asks for. Return
 `findings` for unmet criteria or incorrect implementation, and `blocked` when
 the evidence is insufficient to judge completion. Return `pass` only when every
 criterion is satisfied. Save and validate the exact response, then verify its
@@ -330,12 +363,16 @@ runtime.md.
 
 When requested work awaits CI or reviews, the host parent registers a T3 watch
 and yields. On a wake, the runner inspects checks, review comments, conflicts, and the
-head SHA. Route PR breakage as in Route fixes: low-complexity CI failures go to
-a fixer and everything else to the owning coder. A coder change gets runner
+head SHA. It updates the branch when GitHub reports a conflict or the repository
+requires the PR to contain the base tip, and reports to the lead. The lead routes
+PR breakage as in Route fixes: low-complexity CI failures and trivial conflicts
+go to a fixer and everything else to the owning coder. A coder change gets runner
 checks, adversary re-review, final architect review, and a runner push. A fixer
-change gets the same without the adversary re-review. Link again and wait through T3 as needed. No reported CI checks
-means no CI suite was reported, not that a suite ran successfully. Query failures
-are blockers. Branch protection and required reviews still apply.
+change gets the same without the adversary re-review. Link again and wait
+through T3 as needed. When GitHub reports no checks for the PR, there is nothing that can fail, so the
+GitHub checks requirement passes. Report it as no CI, not as a CI run that
+passed. Query failures are blockers. Branch protection, required reviews, and
+repository merge criteria still apply.
 
 The runner merges only when the latest recorded scope authorizes merge, through the
 preflight confirmation or a later explicit user instruction, every merge
