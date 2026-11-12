@@ -23,10 +23,12 @@ All test execution and GitHub interactions go through the test and PR runner,
 preferably GPT Terra or a similar model. If the parent is not the selected runner
 target, use bounded runner tasks for checks,
 GitHub reads, publication, and merge. Supply exact commands, candidate revision,
-authorized actions, and evidence paths. Runner tasks may write check evidence
-and perform explicitly authorized GitHub actions. They must not edit code or
-implement fixes, however small. They return failures with evidence, and the
-parent routes them as in Route fixes in [flow.md](flow.md).
+authorized actions, and evidence paths. Runner tasks may write check evidence,
+update the branch from its base, and perform explicitly authorized GitHub
+actions. They must not edit code, resolve conflicts, or implement fixes, however
+small. When the runner and the lead are different models, runner tasks report
+results and failures with evidence to the lead, and the lead routes any
+follow-up work as in Route fixes in [flow.md](flow.md).
 Use the check helper's JSON evidence for test results and verify actual PR state
 for publication results. Reserve JSON handoff schemas for the role results they
 cover; operations return evidence paths, command outcomes, PR URL, and head SHA.
@@ -74,9 +76,21 @@ use the live tool schema to select that revision. If T3 cannot provide the
 required starting content, stop and reconcile before proceeding.
 
 After an isolated coder or fixer finishes, inspect its actual checkout and diff.
-The parent commits only intended changes and integrates them into the flow
-branch, for example by cherry-picking, one slice at a time even when several
-wave results are ready. Route conflicts to the owning coder of the slice being
+The parent commits only intended changes. A sequential task's changes are then
+integrated into the flow branch, for example by cherry-picking. A wave slice's
+commit stays in its own checkout through its review loop and is integrated only
+after that loop is clean, as the flow procedure describes. Integrate one slice at
+a time even when several wave results are ready.
+
+T3 starts a new worktree from the parent's commit, not from a chosen revision.
+A wave fix-round coder therefore gets a new T3 worktree, and its brief names the
+slice's recorded commit. Before editing, the child checks out that commit inside
+its own prepared checkout, for example with `git switch --detach <sha>`, and
+verifies that HEAD matches it and the checkout is clean. All worktrees share one
+repository, so the commit is available there. This is not worktree creation; it
+only moves the checkout T3 prepared. If the commit is unavailable or the
+verification fails, the child returns `blocked` and the slice is demoted to
+sequential. Route conflicts to the owning coder of the slice being
 integrated; a wave slice demoted by overlap is repaired by its owning coder on
 the new integrated base, sequentially. Record source and integrated revisions
 and the integration order. An integrated fixer change goes directly to runner
@@ -85,7 +99,8 @@ An isolated child's result alone does not establish that integration succeeded.
 
 Reviews of uncommitted flow changes use shared isolation. An isolated reviewer
 must inspect the exact committed candidate revision, including the same diff
-base. Confirm that revision before accepting its verdict. Keep the existing
+base. A wave slice's checks and reviews name its worktree path and committed
+revision, as described in the flow procedure. Confirm that revision before accepting its verdict. Keep the existing
 dependency order. During checks and reviews, freeze writers in the checkout
 being checked or reviewed; writers in other worktrees do not invalidate that
 evidence, provided the parent verifies the candidate checkout before and after.
@@ -142,8 +157,9 @@ as the flow procedure requires.
 The runner uses Git/`gh` or available GitHub tools for all GitHub interactions.
 Immediately after creating or pushing to a PR, call `link_pull_request` with the full URL as the next tool
 call. Every PR in a stack must be linked, though autoflow normally uses one PR.
-The parent owns watches. Have the runner read existing comments and route needed
-changes to the owning coder before calling `watch_pull_request`; then end the turn. On a CI wake, the runner inspects actual checks,
+The parent owns watches. Have the runner read existing comments and report them
+to the lead, which routes needed changes, before calling `watch_pull_request`;
+then end the turn. On a CI wake, the runner inspects actual checks,
 reviews, conflicts, and head SHA. Do not treat a wake as a merge decision.
 Never use `gh --watch`, sleep loops, or scheduled polling. If a later invocation
 requires waiting again, follow the current tool instructions for watch registration.
