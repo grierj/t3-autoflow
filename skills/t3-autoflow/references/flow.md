@@ -6,29 +6,33 @@
    or writer targeting it. Never stash or discard existing work.
 2. Discover project checks and repository review and merge criteria, and
    select roles through T3 using [discovery.md](discovery.md). Record their
-   sources. Establish the workflow lead and test and PR runner using
+   sources. When the prompt names a model selector, the selector proposes the
+   role targets instead of the parent, as described under Model selector in
+   discovery.md. Establish the workflow lead and test and PR runner using
    [runtime.md](runtime.md).
 3. Confirm models and scope with the user, as described below, before any
-   delegation.
+   delegation other than the selection task.
 4. For publication, the runner verifies GitHub access, remote, and base. Local-only
    flows need no GitHub access. Record the original branch and base SHA.
-5. Create the external flow directory and record the parent thread, checkout,
-   and confirmed settings. After plan agreement, create `autoflow/<flow-id>` as
+5. Create the external flow directory, unless a model selector already
+   created it, and record the parent thread, checkout, and confirmed settings. After plan agreement, create `autoflow/<flow-id>` as
    the flow branch. Use shared or T3-managed worktree isolation as described in
    the runtime contract.
 
 ## Confirm models and scope
 
-The host parent asks the user before the first delegation; children never
-contact humans. Show a Markdown table of the selected targets with one row per
+The host parent asks the user before the first role delegation; children never
+contact humans. A named selector's selection task is the only delegation that
+may come first. Show a Markdown table of the selected targets with one row per
 role: workflow lead, each architect, the coder, adversary, and fixer pools, and
 the test and PR runner. Use these columns:
 
 | Role | Provider | Model | Options | Source |
 | --- | --- | --- | --- | --- |
 
-`Source` is either the prompt override or the skill preference that chose the
-target. Give a pool one row per selected target. Below the table, note limits:
+`Source` is the prompt override, the recommended example, or the role
+capability match that chose the target. Give a pool one row per selected target. Below the table, name who
+selected the targets, the parent or the named selector, then note limits:
 a single available architect, preferred models missing from the catalog and
 what replaced them, the workflow lead choice, and expected writer/adversary overlap.
 
@@ -49,7 +53,8 @@ In the same request, ask:
 Ask every question, even when the prompt already answers it. Offer the prompt's
 answers as defaults. Use the host's structured question tool when available;
 otherwise ask in chat and end the turn. Do not plan, delegate, or create the
-flow branch until the user answers.
+flow branch until the user answers. The only exception is the single
+read-only selection task for a model selector the prompt named.
 
 Resolve requested model changes through the live T3 catalog. Report unavailable
 models or unsupported options rather than substituting. Show the revised table

@@ -7,33 +7,45 @@ optional PR publication and merge. T3 owns child execution and CI wakeups.
 The agent discovers testing instructions from the project and selects models
 from T3's live provider/model catalog according to each role. Your prompt can
 override those choices. There are no setup files or fixed provider/model IDs to maintain.
-The models below are recommendations for each role; none is required.
+Each role below names the capability it needs and recommended example models.
+The examples are not an allow-list: any available model with that capability
+can be selected, and none is required.
 
-- GPT 6.1 Terra or a similar model leads the workflow by default; the prompt
-  can choose another lead, including the parent.
-- GPT Astra, Claude Opus, and Muse Wonder Full are the architect pool. When two
-  are available, the primary architect drafts the plan and the secondary reviews
-  it. Each either accepts the other's plan, sending it to the workflow lead, or
+- The workflow lead needs reliable instruction following and routing. GPT 6.1
+  Terra or a similar model leads by default; the prompt can choose another
+  lead, including the parent.
+- Architects need the strongest available reasoning and planning, for example
+  GPT Astra, Claude Opus, or Muse Wonder Full. When two are selected, the
+  primary architect drafts the plan and the secondary reviews it. Each either accepts the other's plan, sending it to the workflow lead, or
   revises it and hands it back, until one accepts it unchanged. Each revision
   names a concrete defect, cites where it is shown and what would fail, and
   logs dropped preferences.
-- Claude Sonnet and GPT Sol own code implementation.
-- Sonnet, Sol, Muse Spark, and Grok 4.7 review as adversaries. Prefer a reviewer
-  who did not implement the work, without requiring it.
-- Muse Spark, GPT Terra at maximum effort, and Claude Sonnet fix low-complexity
-  CI failures after the PR opens and trivial base-update conflicts, and send
-  anything larger to the owning coder.
+- Coders own code implementation and need strong multi-file coding, for
+  example Claude Sonnet or GPT Sol.
+- Adversaries review for concrete defects, for example Sonnet, Sol, Muse Spark,
+  or Grok 4.7. Prefer a reviewer who did not implement the work, without
+  requiring it.
+- Fixers need fast, precise mechanical edits, for example Muse Spark, GPT Terra
+  at maximum effort, or Claude Sonnet. They fix low-complexity CI failures
+  after the PR opens and trivial base-update conflicts, and send anything
+  larger to the owning coder.
   Fixer changes skip adversary re-review and go to checks and the final
   architect review. Adversary findings always go to the owning coder.
-- The test and PR runner, preferably GPT Terra or similar, runs all tests,
+- The test and PR runner needs exact command execution and faithful reporting,
+  for example GPT Terra or similar. It runs all tests,
   updates the branch from its base, and handles all GitHub interactions and PR
   operations. It reports to the workflow lead but does not edit code. Check failures before the PR, and CI failures that are
   not low complexity, return to the owning coder.
 
+The model running the skill picks the role models unless your prompt names a
+model to pick them, for example "have Claude Opus choose the models". That
+model gets one read-only selection task with the live catalog and returns a
+proposed table. It is the only delegation before you confirm.
+
 Before starting, the skill shows a table of the selected models by role and asks
 you to confirm or change them. It also asks whether the work should result in a
-PR and, if so, whether to merge it after all requirements pass. Nothing is
-delegated until you answer.
+PR and, if so, whether to merge it after all requirements pass. Apart from a
+selection task you asked for, nothing is delegated until you answer.
 
 Repeat coder fixes and adversary review until no fixes remain or the original
 coder reports no progress. The coder can ask an architect to arbitrate. After

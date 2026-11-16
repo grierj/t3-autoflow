@@ -64,18 +64,21 @@ instances, available models, and supported options. Search the catalog when rele
 Choose explicit targets from what is available; no hard-coded model IDs, provider
 assumptions, or fixed role map is required from the user.
 
-Use these role preferences, resolving names to actual targets in the live catalog:
+Select each role by the capability it needs. The example models show what
+fits that capability today; they are not an allow-list. Any available model
+with the capability can fill the role, and a role can have models not listed
+here. Resolve example names to actual targets in the live catalog:
 
-| Role | Preferred models | Responsibility |
-| --- | --- | --- |
-| Workflow lead | GPT 6.1 Terra or similar (default) | Run the workflow and route work between roles |
-| Architect | GPT Astra, Claude Opus, Muse Wonder Full | Plan, slice work, define implementation details and success criteria; arbitrate when a coder asks; review final code against the accepted plan |
-| Coder | Claude Sonnet, GPT Sol | Own implementation; fix adversary findings, architect review gaps, and check failures |
-| Adversary | Claude Sonnet, GPT Sol, Muse Spark, Grok 4.7 | Review for concrete defects and regressions |
-| Fixer | Muse Spark, GPT Terra at maximum effort, Claude Sonnet | Fix low-complexity CI failures on an open PR and trivial base-update conflicts; return anything larger to the owning coder |
-| Test and PR runner | GPT Terra or similar | Run all tests, update the branch from its base, and handle all GitHub interactions and PR operations; report to the lead without editing code |
+| Role | Capability to look for | Example models | Responsibility |
+| --- | --- | --- | --- |
+| Workflow lead | Reliable instruction following and routing across long contexts | GPT 6.1 Terra (default) | Run the workflow and route work between roles |
+| Architect | The strongest available reasoning, planning, and repository comprehension | GPT Astra, Claude Opus, Muse Wonder Full | Plan, slice work, define implementation details and success criteria; arbitrate when a coder asks; review final code against the accepted plan |
+| Coder | Strong multi-file code generation and tool use | Claude Sonnet, GPT Sol | Own implementation; fix adversary findings, architect review gaps, and check failures |
+| Adversary | Careful code review that finds concrete defects, ideally from a different model than the coder | Claude Sonnet, GPT Sol, Muse Spark, Grok 4.7 | Review for concrete defects and regressions |
+| Fixer | Fast, precise, mechanical edits | Muse Spark, GPT Terra at maximum effort, Claude Sonnet | Fix low-complexity CI failures on an open PR and trivial base-update conflicts; return anything larger to the owning coder |
+| Test and PR runner | Exact command execution and faithful evidence reporting | GPT Terra | Run all tests, update the branch from its base, and handle all GitHub interactions and PR operations; report to the lead without editing code |
 
-These are model preferences, not provider IDs or a static catalog. Honor prompt
+These are recommendations, not provider IDs or a static catalog. Honor prompt
 overrides. Resolve each name through T3 and use supported options. A Terra
 fixer should use the catalog's maximum reasoning effort unless the prompt sets
 another; do not invent an option. When one model fills both the fixer and runner
@@ -97,15 +100,60 @@ to sequential repair. A fresh child can continue that ownership using the same
 selected target and the full history of findings and attempts. Fixers do not
 replace the owning coder.
 
-Record provider, model, options, role, and the preference or override that
-chose each target. Present them for user confirmation as described in
+Record provider, model, options, role, and the override, example, or
+capability match that chose each target. Present them for user confirmation as described in
 [flow.md](flow.md) before launch. Keep confirmed selections stable across
-retries and re-reviews. Preferred models are recommendations, never
-requirements. When none is available, choose the best available model for the
-role, note why in the confirmation, and let the user change it; ask for a choice
+retries and re-reviews. Example models are recommendations, never
+requirements. When none is available, or a better match exists, choose the
+available model that best fits the role's capability, note why in the
+confirmation, and let the user change it; ask for a choice
 only when no suitable target exists. A model named in the prompt must be honored
 or reported unavailable, never silently replaced. After a provider error,
 follow the runtime's bounded retry path.
+
+## Model selector
+
+By default the host parent, the model the skill started under, selects the
+role targets. The prompt can name another model to do the picking, the model
+selector, for example "have Claude Opus choose the models". Naming a workflow
+lead does not make it the selector; the lead routes work only after
+confirmation.
+
+The selector gets exactly one read-only task. It is the only delegation
+allowed before the user confirms models and scope:
+
+1. Resolve the named selector through the live catalog like any prompt-named
+   model. If it is unavailable, report that and ask the user. Do not select in
+   its place.
+2. Create the external flow directory now, so the result can be saved there.
+3. Delegate with the `general` role in the shared checkout. The brief carries
+   the goal, the role table above with capabilities and examples, the
+   architect and adversary guidance in this section, every prompt override
+   verbatim, and the live catalog of providers, models, and supported options
+   the parent discovered, since the child may lack catalog access. The
+   selector inspects only. It does not edit, delegate further, or contact the
+   user.
+4. The selector returns a `selection` result: one target per selected role
+   slot, with `providerInstanceId`, `model`, `options`, a `source` of
+   `override`, `example`, or `capability`, and a `reason`. Architects are
+   listed primary first. `notes` carry the limits the confirmation must state.
+   Save the result and validate it with
+   `python3 <skill-dir>/scripts/validate.py result selection <file>`.
+5. The validator checks the shape only. The parent then confirms that every
+   target and option exists in the live catalog and that every prompt override
+   appears unchanged. If validation, either check, or the selection task
+   itself fails, do not delegate again. Keep the saved result, show the user
+   the selector's proposal or the error with each problem, and ask how to
+   proceed. Never repair or quietly replace its picks. The runtime's one-retry
+   rules for malformed results and provider errors do not apply to selection;
+   only the user can authorize another selection task.
+6. Present the validated targets in the confirmation table and name the
+   selector. The user's changes apply as usual and need no new selection task.
+
+The selector holds no flow role after confirmation unless it was also picked
+for one. Record its target, task ID, and result path. On resume, the parent
+revises an unavailable confirmed model itself. It reruns the selector only
+when the user asks.
 
 ## Discover publication defaults
 

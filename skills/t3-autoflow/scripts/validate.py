@@ -30,6 +30,10 @@ CHECKLIST = enum('goal', 'scope', 'criteria', 'verification', 'slices', 'depende
                  'parallel', 'repository', 'unknowns', 'other')
 OBJECTION = obj(dict(item=CHECKLIST, issue=TEXT, source=TEXT, failure=TEXT))
 DROPPED = obj(dict(item=CHECKLIST, observation=TEXT, reason=TEXT))
+ROLES = ('lead', 'architect', 'coder', 'adversary', 'fixer', 'runner')
+TARGET = obj(dict(role=enum(*ROLES), providerInstanceId=TEXT, model=TEXT,
+                  options=dict(type='object'), source=enum('override', 'example', 'capability'),
+                  reason=TEXT))
 SCHEMAS = {
     'plan': PLAN,
     'checker': obj(dict(verdict=enum('agree', 'revised'), objections=array(OBJECTION),
@@ -38,7 +42,8 @@ SCHEMAS = {
                       deviations=TEXTS, judgementCalls=TEXTS)),
     'review': obj(dict(verdict=enum('pass', 'findings', 'blocked'), summary=TEXT, findings=array(FINDING))),
     'arbitrator': obj(dict(verdict=enum('progressing', 'try-fix', 'terminate'), evidence=TEXT,
-                           action=TEXT))
+                           action=TEXT)),
+    'selection': obj(dict(targets=array(TARGET, 1), notes=TEXTS))
 }
 
 
@@ -60,7 +65,7 @@ def validate(schema, value, path='$'):
         require(len(value) >= schema.get('minItems', 0), f'{path}: too few items')
         for i, item in enumerate(value):
             validate(schema['items'], item, f'{path}[{i}]')
-    elif kind == 'object':
+    elif kind == 'object' and 'properties' in schema:
         require(set(value) == set(schema['required']), f'{path}: missing or unknown fields')
         for key, item in value.items():
             validate(schema['properties'][key], item, f'{path}.{key}')
@@ -92,6 +97,14 @@ def result(kind, value, reviewed=None):
         require((value['verdict'] == 'findings') == bool(value['findings']), 'verdict contradicts findings')
         ids = [f['id'] for f in value['findings']]
         require(len(ids) == len(set(ids)), 'duplicate finding ID')
+    elif kind == 'selection':
+        counts = {role: sum(t['role'] == role for t in value['targets']) for role in ROLES}
+        require(counts['lead'] == 1 and counts['runner'] == 1, 'select exactly one lead and one runner')
+        require(1 <= counts['architect'] <= 2, 'select one or two architects, primary first')
+        require(all(counts[role] for role in ('coder', 'adversary', 'fixer')),
+                'select at least one coder, adversary, and fixer')
+        pairs = [(t['role'], t['providerInstanceId'], t['model']) for t in value['targets']]
+        require(len(pairs) == len(set(pairs)), 'duplicate target in a role')
     return value
 
 

@@ -16,7 +16,10 @@ Use [validation](references/validation.md) for handoff and check helpers.
 
 ## Scope and invariants
 
-- Before any delegation, show the user a table of the selected models by role
+- The host parent selects role models unless the prompt names a model selector.
+  A named selector gets one read-only selection task, the only delegation
+  allowed before confirmation; see the model selector in discovery.
+- Before any other delegation, show the user a table of the selected models by role
   and ask them to confirm or change it. In the same request, ask whether the work
   should result in a PR and, if so, whether to merge it after all requirements
   pass. Wait for answers. See the confirmation step in the flow reference.
@@ -31,7 +34,8 @@ Use [validation](references/validation.md) for handoff and check helpers.
   T3 owns worktree creation and lifecycle; follow the isolation and integration
   rules in the runtime contract.
 - Discover available providers and models through T3 and select them by role.
-  Role models are recommendations, not requirements. Honor prompt overrides and
+  Named role models are recommended examples of each role's capability, not an
+  allow-list; any capable available model may be selected. Honor prompt overrides and
   record the choices. Never silently replace a model the user named; no CLI relay.
 - Architects plan modular slices. When two are available, the primary and
   secondary architects revise each other's plan until one accepts it unchanged.
@@ -54,7 +58,7 @@ Use [validation](references/validation.md) for handoff and check helpers.
   It reports to the lead with evidence and does not edit code or resolve
   conflicts; the lead routes fixes to a coder or fixer.
   Include context in each brief; children inherit no history.
-- For architect, coder, fixer, and adversary handoffs, request JSON only. Save
+- For selector, architect, coder, fixer, and adversary handoffs, request JSON only. Save
   the exact result outside the checkout and validate it with `python3 <skill-dir>/scripts/validate.py result <kind> <file>` before using
   its verdict. Do not derive control decisions from a prose summary or repair
   malformed results yourself. See the validator's `schemas` command for contracts.
@@ -77,7 +81,8 @@ role results. The runner may write command evidence to paths assigned in its bri
 Persist the flow checkout path, each delegate's isolation and returned checkout/branch,
 wave groupings with their common base revision and integration order, demoted
 slices, integration revisions, parent thread ID/link, branch/base, confirmed PR
-and merge answers, confirmed models, original coder ownership, findings and fix attempts, discovered
+and merge answers, any model selector with its task ID and result path,
+confirmed models, original coder ownership, findings and fix attempts, discovered
 checks and their sources, repository review and merge criteria with their
 assigned steps, accepted plan, final architect review and its candidate
 revision, current phase/task, child task IDs and
@@ -105,7 +110,8 @@ same revision and checkout content that will be published.
   recorded checkout, a different checkout, or an ambiguous merge.
   Recheck model availability and project test instructions; rerun stale checks.
   Reuse the latest recorded scope. If a confirmed model is unavailable, show the revised
-  table and confirm it with the user before delegating. Reuse validated artifacts,
+  table and confirm it with the user before delegating; rerun a recorded model
+  selector only when the user asks. Reuse validated artifacts,
   but create fresh children for new work. Resume in the original parent where
   possible; cross-thread resume requires confirming that the old owner is inactive.
   A missing or ambiguous record requires operator reconciliation, not guessing.

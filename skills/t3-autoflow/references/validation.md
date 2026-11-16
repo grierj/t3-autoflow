@@ -12,8 +12,13 @@ python3 <skill-dir>/scripts/validate.py result review <response.json>
 python3 <skill-dir>/scripts/validate.py result checker <response.json> <reviewed-plan.json>
 ```
 
-Kinds are `plan`, `checker`, `coder`, `review`, and `arbitrator`. Every field in a
-contract is required; extra fields fail. A plan task's `implementation` array
+Kinds are `selection`, `plan`, `checker`, `coder`, `review`, and `arbitrator`.
+Every field in a contract is required; extra fields fail. A model selector uses
+`selection`. Validation requires exactly one lead and one runner, one or two
+architects with the primary first, at least one coder, adversary, and fixer,
+no duplicate target within a role, and an object for each target's `options`.
+It does not check the catalog or prompt overrides; the parent does, as
+described in [discovery.md](discovery.md). A plan task's `implementation` array
 contains its implementation steps and interface decisions. The reviewing architect in
 the plan exchange uses `checker`: `agree` returns the reviewed plan unchanged with
 no objections or open questions, and `revised` returns a complete rewritten plan
