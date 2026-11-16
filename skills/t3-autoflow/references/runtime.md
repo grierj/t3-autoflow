@@ -111,7 +111,7 @@ recovery and leave lifecycle management to T3.
 T3's tool role is separate from the autoflow model role. Map architect planning
 and plan exchange, which can return a revised plan, to `design`, coders and fixers
 to `implementation`, runner checks to `test`, the final architect review and adversaries
-to `review`, and architect arbitration or workflow coordination to `general`. Select a supported role for runner GitHub operations.
+to `review`, and model selection, architect arbitration, or workflow coordination to `general`. Select a supported role for runner GitHub operations.
 
 The brief must contain the repository path, branch, read/write scope, goal,
 acceptance criteria, relevant plan and evidence, output contract, and instructions
@@ -137,6 +137,8 @@ and authorized scope instead of using an unrelated role schema. A malformed resp
 the same selected model, then becomes a blocker. A provider error similarly
 gets at most one same-target retry. If arbitration itself is unavailable, terminate
 with the infrastructure error recorded. Do not recurse through fallback models.
+These retries do not apply to the model selection task; see the model selector
+in [discovery.md](discovery.md).
 
 New review/re-check means a new `delegate_task` with the prior findings and diff.
 Cancel superseded tasks using `task_cancel`. A child question is not permission

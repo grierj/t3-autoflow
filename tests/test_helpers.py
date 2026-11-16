@@ -96,6 +96,29 @@ class Validation(unittest.TestCase):
             reviewed.write_text(json.dumps(plan))
             self.assertEqual(v.main(['result', 'checker', str(result), str(reviewed)]), agree)
 
+    def test_model_selection(self):
+        def target(role, model, source='example'):
+            return dict(role=role, providerInstanceId='codex', model=model, options={},
+                        source=source, reason='Fits the role capability')
+        targets = [target('lead', 'terra'), target('architect', 'astra'),
+                   target('architect', 'opus', 'capability'), target('coder', 'sol', 'override'),
+                   target('adversary', 'grok'), target('fixer', 'spark'), target('runner', 'terra')]
+        good = dict(targets=targets, notes=['Only two architects available'])
+        v.result('selection', good)
+        v.result('selection', dict(good, targets=[dict(targets[0], options={'effort': 'max'})] + targets[1:]))
+        for value in [dict(good, targets=targets[1:]),
+                      dict(good, targets=targets + [target('runner', 'sol')]),
+                      dict(good, targets=targets + [target('architect', 'wonder')]),
+                      dict(good, targets=[t for t in targets if t['role'] != 'fixer']),
+                      dict(good, targets=targets + [target('coder', 'sol')]),
+                      dict(good, targets=[dict(targets[0], role='selector')] + targets[1:]),
+                      dict(good, targets=[dict(targets[0], source='preference')] + targets[1:]),
+                      dict(good, targets=[dict(targets[0], options='max')] + targets[1:]),
+                      dict(good, targets=[dict(targets[0], reason=' ')] + targets[1:]),
+                      {'targets': targets}]:
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                v.result('selection', value)
+
     def test_coder_loop_decisions(self):
         for status in ['done', 'blocked', 'stalled', 'arbitrate']:
             with self.subTest(status=status):
